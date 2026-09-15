@@ -1,0 +1,1184 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>社区 - 河流污染监测系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --primary-color: #00c6ff;
+  --secondary-color: #0072ff;
+  --accent-color: #00ffcc;
+  --bg-dark: #0a192f;
+  --bg-darker: #020c1b;
+  --card-bg: rgba(10, 25, 47, 0.8);
+  --text-primary: #e6f1ff;
+  --text-secondary: #ccd6f6;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-darker);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 粒子效果背景 */
+.particle-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  pointer-events: none;
+  opacity: 0.3;
+  animation: float 8s infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px);
+  }
+}
+
+/* 主容器样式 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+/* 数据可视化区域 */
+.visualization-section {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 114, 255, 0.1);
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  margin: 2rem 0;
+}
+
+/* 反馈内容卡片 */
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.feedback-card {
+  background: linear-gradient(135deg, rgba(10, 25, 47, 0.8), rgba(0, 114, 255, 0.1));
+  border-radius: 15px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.feedback-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 198, 255, 0.2);
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 1rem;
+  border: 2px solid var(--primary-color);
+}
+
+.user-info {
+  flex: 1;
+}
+
+.username {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin: 0;
+}
+
+.feedback-date {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.feedback-details {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.location {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pollution-level {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 500;
+}
+
+.feedback-content {
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background: rgba(0, 198, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+}
+
+/* 点赞按钮样式 */
+.like-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.like-button:hover {
+  background: var(--primary-color);
+  color: var(--bg-darker);
+}
+
+.like-button.liked {
+  background: var(--primary-color);
+  color: var(--bg-darker);
+}
+
+/* 点赞动画 */
+@keyframes likeAnimation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.like-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.like-button.liked .like-icon {
+  animation: likeAnimation 0.5s ease;
+}
+
+/* 返回按钮 */
+.back-button {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 100;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 198, 255, 0.3);
+}
+
+/* 过滤器和排序 */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.filter-button {
+  background: none;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-button.active {
+  background: var(--primary-color);
+  color: var(--bg-darker);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .feedback-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .back-button {
+    top: 1rem;
+    left: 1rem;
+  }
+}
+
+/* 发布表单区域 */
+.publish-section {
+  background: linear-gradient(160deg, rgba(10, 25, 47, 0.95) 0%, rgba(0, 114, 255, 0.08) 50%, rgba(10, 25, 47, 0.9) 100%);
+  border-radius: 24px;
+  padding: 2.25rem 2.5rem;
+  margin-bottom: 3rem;
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 114, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.publish-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), var(--accent-color), transparent);
+  opacity: 0.6;
+}
+
+.publish-section h2 {
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 1.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  letter-spacing: 0.02em;
+}
+
+.publish-section h2 .publish-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0, 198, 255, 0.2), rgba(0, 255, 204, 0.15));
+  border: 1px solid rgba(0, 198, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.publish-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2rem;
+  max-width: 780px;
+}
+
+.publish-form .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.publish-form .form-row.full-width {
+  grid-column: 1 / -1;
+}
+
+.publish-form .form-row.half-width {
+  grid-column: span 1;
+}
+
+.publish-form label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.publish-form label .label-icon {
+  opacity: 0.85;
+  font-size: 1rem;
+}
+
+.publish-form input[type="text"],
+.publish-form select,
+.publish-form textarea {
+  background: rgba(0, 198, 255, 0.05);
+  border: 1px solid rgba(0, 198, 255, 0.25);
+  border-radius: 14px;
+  padding: 0.85rem 1.1rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.publish-form input::placeholder,
+.publish-form textarea::placeholder {
+  color: rgba(204, 214, 246, 0.45);
+}
+
+.publish-form input:focus,
+.publish-form select:focus,
+.publish-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.12);
+  background: rgba(0, 198, 255, 0.08);
+}
+
+.publish-form textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.publish-form select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2300c6ff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+/* 上传图片区域：拖拽式样式 */
+.publish-form .upload-wrap {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.publish-form .upload-zone {
+  position: relative;
+  flex: 0 0 auto;
+  width: 160px;
+  height: 120px;
+  border: 2px dashed rgba(0, 198, 255, 0.35);
+  border-radius: 16px;
+  background: rgba(0, 198, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.publish-form .upload-zone:hover {
+  border-color: var(--primary-color);
+  background: rgba(0, 198, 255, 0.08);
+}
+
+.publish-form .upload-zone .upload-icon {
+  font-size: 1.8rem;
+  opacity: 0.8;
+}
+
+.publish-form .upload-zone .upload-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.publish-form .upload-zone input[type="file"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.publish-img-preview-wrap {
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.publish-img-preview {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 198, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  display: none;
+}
+
+.publish-img-preview.show {
+  display: block;
+}
+
+.publish-img-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.publish-img-preview-wrap:has(.publish-img-preview.show) .publish-img-remove {
+  display: flex;
+}
+
+.publish-img-remove:hover {
+  background: rgba(255, 68, 68, 0.9);
+}
+
+/* 紧急联系选项 */
+.urgent-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.35rem;
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.06), rgba(255, 87, 34, 0.04));
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.urgent-wrap:has(input:checked) {
+  border-color: rgba(255, 152, 0, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.15);
+}
+
+.urgent-wrap input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: #ff9800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.urgent-wrap span {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.urgent-hint {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin: 0.6rem 0 0 0;
+  padding-left: 0.25rem;
+  line-height: 1.45;
+}
+
+/* 发布按钮 */
+.publish-form .form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.btn-publish {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: var(--bg-darker);
+  border: none;
+  padding: 1rem 2.2rem;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 16px rgba(0, 198, 255, 0.25);
+}
+
+.btn-publish:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 198, 255, 0.35);
+}
+
+.btn-publish:active {
+  transform: translateY(0);
+}
+
+.btn-publish:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .publish-section {
+    padding: 1.5rem 1.25rem;
+    border-radius: 20px;
+  }
+  .publish-form {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .publish-form .form-row.half-width {
+    grid-column: 1 / -1;
+  }
+  .publish-form .upload-wrap {
+    flex-direction: column;
+  }
+  .publish-form .upload-zone {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+/* 加载动画 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 198, 255, 0.1);
+  border-left-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<script src="static/mock-api.js"></script>
+</head>
+<body>
+<div class="particle-background" id="particleContainer"></div>
+
+<a href="Untitled-1.html" class="back-button">
+  <span>←</span> 返回首页
+</a>
+
+<div class="container">
+  <header class="page-header">
+    <h1 class="page-title">社区反馈</h1>
+    <p class="page-subtitle">发现和分享河流保护的故事</p>
+  </header>
+
+  <section class="publish-section">
+    <h2><span class="publish-icon">📝</span>发布</h2>
+    <form class="publish-form" id="publishForm">
+      <div class="form-row full-width">
+        <label for="pubContent"><span class="label-icon">✏️</span>内容</label>
+        <textarea id="pubContent" name="content" placeholder="请描述您发现的污染情况或保护建议…" required></textarea>
+      </div>
+      <div class="form-row half-width">
+        <label for="pubLocation"><span class="label-icon">📍</span>地点</label>
+        <input type="text" id="pubLocation" name="location" placeholder="例如：某市某河段" required>
+      </div>
+      <div class="form-row half-width">
+        <label for="pubLevel"><span class="label-icon">🌊</span>污染程度</label>
+        <select id="pubLevel" name="pollution_level" required>
+          <option value="">请选择</option>
+          <option value="轻微">轻微</option>
+          <option value="中等">中等</option>
+          <option value="严重">严重</option>
+          <option value="非常严重">非常严重</option>
+        </select>
+      </div>
+      <div class="form-row full-width">
+        <label><span class="label-icon">🖼️</span>上传图片（可选）</label>
+        <div class="upload-wrap">
+          <label class="upload-zone" for="pubImage">
+            <span class="upload-icon">📷</span>
+            <span class="upload-text">点击或拖入图片</span>
+            <input type="file" id="pubImage" name="image" accept="image/jpeg,image/png,image/webp">
+          </label>
+          <div class="publish-img-preview-wrap">
+            <img id="pubImagePreview" class="publish-img-preview" alt="预览">
+            <button type="button" class="publish-img-remove" id="pubImageRemove" title="移除图片">×</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row full-width">
+        <div class="urgent-wrap">
+          <input type="checkbox" id="pubUrgent" name="urgent_contact_admin">
+          <span>是否紧急联系管理团队？</span>
+        </div>
+        <p class="urgent-hint">勾选后本条将仅提交给管理员并在反馈管理中突出显示，不会出现在社区动态中。</p>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-publish" id="btnPublish">发布</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="visualization-section">
+    <h2>数据统计</h2>
+    <div class="chart-container">
+      <canvas id="tsChart"></canvas>
+    </div>
+    <div class="chart-container" style="height:320px">
+      <canvas id="locationChart"></canvas>
+    </div>
+    <div class="chart-container" style="height:320px">
+      <canvas id="levelPie"></canvas>
+    </div>
+  </section>
+
+  <div class="filters">
+    <button class="filter-button active" data-filter="all">全部</button>
+    <button class="filter-button" data-filter="popular">最受欢迎</button>
+    <button class="filter-button" data-filter="recent">最新发布</button>
+  </div>
+
+  <div class="feedback-grid" id="feedbackGrid">
+    <!-- 反馈卡片将通过 JavaScript 动态生成 -->
+  </div>
+</div>
+
+<script>
+// 生成粒子效果
+function createParticles() {
+  const container = document.getElementById('particleContainer');
+  const particleCount = 30;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    
+    // 随机大小
+    const size = Math.random() * 15 + 5;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    
+    // 随机位置
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.top = `${Math.random() * 100}%`;
+    
+    // 随机动画延迟
+    particle.style.animationDelay = `${Math.random() * 5}s`;
+    
+    container.appendChild(particle);
+  }
+}
+
+// 初始化图表（创建实例但用真实数据填充）
+let tsChart, locationChart, levelPie;
+
+function initCharts() {
+  const tsCtx = document.getElementById('tsChart').getContext('2d');
+  const locCtx = document.getElementById('locationChart').getContext('2d');
+  const pieCtx = document.getElementById('levelPie').getContext('2d');
+
+  tsChart = new Chart(tsCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#ccd6f6' } } },
+      interaction: { mode: 'index', intersect: false },
+      stacked: true,
+      scales: {
+        x: { stacked: true, ticks: { color: '#ccd6f6' }, grid: { color: 'rgba(204,214,246,0.1)' } },
+        y: { stacked: true, ticks: { color: '#ccd6f6' }, grid: { color: 'rgba(204,214,246,0.1)' } }
+      }
+    }
+  });
+
+  locationChart = new Chart(locCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: '反馈数量', data: [], backgroundColor: 'rgba(0,198,255,0.4)', borderColor: '#00c6ff' }] },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#ccd6f6' }, grid: { color: 'rgba(204,214,246,0.1)' } },
+        y: { ticks: { color: '#ccd6f6' }, grid: { color: 'rgba(204,214,246,0.1)' } }
+      }
+    }
+  });
+
+  levelPie = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: { labels: [], datasets: [{ data: [], backgroundColor: ['#00ff88','#ffbb00','#ff4444','#ff0000'] }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#ccd6f6' } } } }
+  });
+}
+
+async function fetchStatsAndRender() {
+  try {
+    const res = await fetch('/api/community/stats');
+    if(!res.ok) throw new Error('统计接口失败');
+    const s = await res.json();
+
+    // 时间序列堆叠：为每个等级生成数据集
+    const labels = (s.time_series||[]).map(x=>x.date);
+    const levels = s.levels || ['轻微','中等','严重','非常严重'];
+    const levelColors = { '轻微':'#00ff88', '中等':'#ffbb00', '严重':'#ff4444', '非常严重':'#ff0000' };
+    const datasets = levels.map(lvl=>({
+      label: lvl,
+      data: (s.time_series||[]).map(x=>x[lvl]||0),
+      fill: true,
+      borderColor: levelColors[lvl]||'#00c6ff',
+      backgroundColor: (levelColors[lvl]||'#00c6ff')+'33',
+      tension: 0.3
+    }));
+    tsChart.data.labels = labels;
+    tsChart.data.datasets = datasets;
+    tsChart.update();
+
+    // Top地点水平条形
+    const locLabels = (s.top_locations||[]).map(x=>x.location);
+    const locData = (s.top_locations||[]).map(x=>x.total);
+    locationChart.data.labels = locLabels;
+    locationChart.data.datasets[0].data = locData;
+    locationChart.update();
+
+    // 等级分布环形
+    levelPie.data.labels = levels;
+    levelPie.data.datasets[0].data = levels.map(lvl => (s.level_counts||{})[lvl]||0);
+    levelPie.update();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// 从后端获取反馈数据
+let feedbackData = [];
+
+async function fetchFeedbackData() {
+  try {
+    const response = await fetch('/api/community/feedbacks');
+    if (!response.ok) {
+      throw new Error('获取数据失败');
+    }
+    feedbackData = await response.json();
+    
+    // 渲染反馈卡片
+    renderFeedbackCards();
+  } catch (error) {
+    console.error('获取反馈数据失败:', error);
+  }
+}
+
+// 渲染反馈卡片
+function renderFeedbackCards(data = feedbackData) {
+  const grid = document.getElementById('feedbackGrid');
+  grid.innerHTML = '';
+  
+  data.forEach(feedback => {
+    const card = document.createElement('div');
+    card.className = 'feedback-card';
+    
+    // 根据污染等级设置卡片边框颜色
+    const pollutionColor = getPollutionColor(feedback.pollution_level);
+    card.style.borderColor = pollutionColor;
+    
+    card.innerHTML = `
+      <div class="feedback-header">
+        <img src="static/avatars/${feedback.avatar}" alt="${feedback.username}" class="user-avatar">
+        <div class="user-info">
+          <h3 class="username">${feedback.username}</h3>
+          <span class="feedback-date">${new Date(feedback.created_at).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          })}</span>
+        </div>
+      </div>
+      <div class="feedback-details">
+        <span class="location">📍 ${feedback.location}</span>
+        <span class="pollution-level" style="color: ${pollutionColor}">
+          🌊 污染等级: ${feedback.pollution_level}
+        </span>
+      </div>
+      ${feedback.image_path ? `<div style="margin:12px 0;"><img src="static/feedback_images/${feedback.image_path}" alt="反馈图片" style="max-width:100%;max-height:250px;object-fit:contain;border-radius:8px;border:1px solid rgba(0,198,255,0.2);box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>` : ''}
+      <p class="feedback-content">${feedback.content}</p>
+      <button class="like-button ${feedback.isLiked ? 'liked' : ''}" data-id="${feedback.id}">
+        <span class="like-icon">❤️</span>
+        <span class="like-count">${feedback.likes}</span>
+      </button>
+      <div class="like-burst" style="position:absolute;pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);"></div>
+    `;
+
+    // 点赞交互
+    const btn = card.querySelector('.like-button');
+    const countEl = card.querySelector('.like-count');
+    const burstEl = card.querySelector('.like-burst');
+    let holdTimer = null;
+    let interval = null;
+
+    async function likeOnce(inc = 1){
+      try{
+        // 先请求后端，获取实际可以点赞的数量
+        const res = await fetch('/api/community/feedbacks/like', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: feedback.id, inc }) });
+        if(res.ok){
+          const data = await res.json();
+          const current = Number(countEl.textContent)||0;
+          const target = data.likes;
+          const actualInc = target - current;
+          
+          if(actualInc > 0){
+            btn.classList.add('liked');
+            // 丝滑流畅的数字跳动动画
+            animateCount(countEl, current, target, 400);
+            // 优化后的爆炸特效（根据实际点赞数调整粒子数量）
+            burstHearts(burstEl, Math.min(actualInc * 2, 20));
+          // 同步内存数据，便于再次渲染
+          const item = feedbackData.find(x=>x.id===feedback.id);
+          if(item){ item.likes = data.likes; }
+          } else {
+            // 如果达到上限，显示提示
+            const errorData = await res.json().catch(() => ({}));
+            if(errorData.error) {
+              showLikeError(btn, errorData.error);
+            }
+          }
+        } else {
+          const errorData = await res.json().catch(() => ({error: '点赞失败'}));
+          showLikeError(btn, errorData.error || '点赞失败');
+        }
+      }catch(e){ 
+        console.error(e);
+        showLikeError(btn, '网络错误，请稍后重试');
+      }
+    }
+    
+    // 显示点赞错误提示
+    function showLikeError(btn, message) {
+      const tooltip = document.createElement('div');
+      tooltip.textContent = message;
+      tooltip.style.cssText = 'position:absolute;background:rgba(255,68,68,0.9);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;pointer-events:none;z-index:1000;white-space:nowrap;transform:translateY(-100%);margin-top:-10px;';
+      btn.style.position = 'relative';
+      btn.appendChild(tooltip);
+      setTimeout(() => {
+        tooltip.style.transition = 'opacity 0.3s';
+        tooltip.style.opacity = '0';
+        setTimeout(() => tooltip.remove(), 300);
+      }, 2000);
+    }
+
+    // 点击一次点赞
+    btn.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      await likeOnce(1);
+    });
+
+    // 长按连续点赞（叠加）
+    btn.addEventListener('mousedown', ()=>{
+      // 先延迟触发长按，避免误触
+      holdTimer = setTimeout(()=>{
+        let step = 1;
+        interval = setInterval(()=>{
+          likeOnce(1);
+          step = Math.min(5, step+1); // 可逐步加速
+        }, 180);
+      }, 400);
+    });
+    ['mouseleave','mouseup','touchend','touchcancel'].forEach(ev=>{
+      btn.addEventListener(ev, ()=>{ clearTimeout(holdTimer); clearInterval(interval); holdTimer=null; interval=null; });
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// 优化后的计数动画（更丝滑流畅）
+function animateCount(el, from, to, duration){
+  const start = performance.now();
+  function frame(t){
+    const elapsed = t - start;
+    const progress = Math.min(1, elapsed / duration);
+    // 使用更平滑的缓动函数（easeOutCubic）
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = Math.round(from + (to - from) * eased);
+    el.textContent = String(val);
+    
+    // 添加数字跳动效果
+    if(progress < 1) {
+      const scale = 1 + (1 - progress) * 0.3; // 逐渐缩小回正常大小
+      el.style.transform = `scale(${scale})`;
+      el.style.transition = 'transform 0.1s ease-out';
+      requestAnimationFrame(frame);
+    } else {
+      el.style.transform = 'scale(1)';
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+// 优化后的爆炸爱心粒子（更丝滑流畅，支持自定义数量）
+function burstHearts(container, count = 10){
+  const n = Math.min(count, 30); // 最多30个粒子
+  const heartTypes = ['❤️', '💖', '💗', '💕', '💝']; // 多种爱心样式
+  
+  for(let i=0;i<n;i++){
+    const span = document.createElement('span');
+    span.textContent = heartTypes[Math.floor(Math.random() * heartTypes.length)];
+    span.style.position = 'absolute';
+    span.style.left = '50%';
+    span.style.top = '50%';
+    span.style.transform = 'translate(-50%,-50%) scale(0)';
+    span.style.opacity = '0';
+    span.style.filter = 'drop-shadow(0 0 8px rgba(255,0,0,0.8))';
+    span.style.fontSize = (14 + Math.random() * 8) + 'px';
+    span.style.pointerEvents = 'none';
+    container.appendChild(span);
+    
+    const angle = (Math.PI * 2 / n) * i + (Math.random() - 0.5) * 0.5; // 均匀分布 + 随机偏移
+    const dist = 50 + Math.random() * 50;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - 20; // 向上偏移
+    const scale = 0.8 + Math.random() * 0.6;
+    const rotation = (Math.random() - 0.5) * 360;
+    const duration = 800 + Math.random() * 400;
+    
+    // 使用更流畅的动画
+    span.animate([
+      { 
+        transform: 'translate(-50%,-50%) scale(0) rotate(0deg)', 
+        opacity: 0 
+      },
+      { 
+        transform: `translate(-50%,-50%) scale(${scale * 1.2}) rotate(${rotation}deg)`, 
+        opacity: 1,
+        offset: 0.3
+      },
+      { 
+        transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scale}) rotate(${rotation * 1.5}deg)`, 
+        opacity: 0.8,
+        offset: 0.7
+      },
+      { 
+        transform: `translate(calc(-50% + ${tx * 1.2}px), calc(-50% + ${ty * 1.2}px)) scale(0) rotate(${rotation * 2}deg)`, 
+        opacity: 0 
+      }
+    ], { 
+      duration: duration, 
+      easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' // 更有弹性的缓动
+    }).onfinish = ()=> span.remove();
+  }
+}
+
+// 根据污染等级返回对应的颜色
+function getPollutionColor(level) {
+  switch(level.toLowerCase()) {
+    case '严重':
+      return '#ff4444';
+    case '中等':
+      return '#ffbb00';
+    case '轻微':
+      return '#00ff88';
+    default:
+      return 'rgba(0, 198, 255, 0.2)';
+  }
+}
+
+// 点赞功能
+function toggleLike(id) {
+  const feedback = feedbackData.find(f => f.id === id);
+  if (feedback) {
+    feedback.isLiked = !feedback.isLiked;
+    feedback.likes += feedback.isLiked ? 1 : -1;
+    renderFeedbackCards();
+  }
+}
+
+// 过滤器功能
+document.querySelectorAll('.filter-button').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+    
+    const filter = button.dataset.filter;
+    let filteredData = [...feedbackData];
+    
+    switch(filter) {
+      case 'popular':
+        filteredData.sort((a, b) => b.likes - a.likes);
+        break;
+      case 'recent':
+        filteredData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+    }
+    
+    renderFeedbackCards(filteredData);
+  });
+});
+
+// 发布表单：图片预览与移除
+document.getElementById('pubImage').addEventListener('change', function(e) {
+  const preview = document.getElementById('pubImagePreview');
+  const file = e.target.files && e.target.files[0];
+  if (!file) { preview.classList.remove('show'); preview.src = ''; return; }
+  const reader = new FileReader();
+  reader.onload = function() { preview.src = reader.result; preview.classList.add('show'); };
+  reader.readAsDataURL(file);
+});
+document.getElementById('pubImageRemove').addEventListener('click', function() {
+  document.getElementById('pubImage').value = '';
+  const preview = document.getElementById('pubImagePreview');
+  preview.src = '';
+  preview.classList.remove('show');
+});
+
+// 发布表单：提交
+document.getElementById('publishForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnPublish');
+  btn.disabled = true;
+  const content = document.getElementById('pubContent').value.trim();
+  const location = document.getElementById('pubLocation').value.trim();
+  const pollution_level = document.getElementById('pubLevel').value;
+  const urgent_contact_admin = document.getElementById('pubUrgent').checked;
+  const fileInput = document.getElementById('pubImage');
+  let image_data = null;
+  if (fileInput.files && fileInput.files[0]) {
+    const file = fileInput.files[0];
+    image_data = await new Promise((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.readAsDataURL(file);
+    });
+  }
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        content,
+        location,
+        pollution_level,
+        image_data: image_data || undefined,
+        urgent_contact_admin
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      document.getElementById('publishForm').reset();
+      const prev = document.getElementById('pubImagePreview');
+      prev.classList.remove('show');
+      prev.src = '';
+      if (!urgent_contact_admin) {
+        fetchFeedbackData();
+        fetchStatsAndRender();
+      }
+      alert(urgent_contact_admin ? '已提交给管理团队，我们会尽快处理。' : '发布成功！');
+    } else {
+      alert(data.error || '发布失败，请稍后重试');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('网络错误，请稍后重试');
+  }
+  btn.disabled = false;
+});
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', () => {
+  createParticles();
+  initCharts();
+  fetchStatsAndRender();
+  fetchFeedbackData();
+});
+</script>
+<link rel="stylesheet" href="static/target-cursor.css">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="static/target-cursor.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initTargetCursor({ targetSelector: 'a, button, .cursor-target', spinDuration: 2, hideDefaultCursor: true });
+  });
+</script>
+</body>
+</html> 

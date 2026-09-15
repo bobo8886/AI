@@ -1,0 +1,931 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>河流污染监测平台 - 登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            color-scheme: dark;
+            --polluted-bg: #07110e;
+            --polluted-deep: #1a2e26;
+            --polluted-glow: #39ff88;
+            --polluted-alert: #9dff5b;
+            --clean-bg: #031b2a;
+            --clean-deep: #0ea5e9;
+            --clean-glow: #7dd3fc;
+            --card-glass: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.18);
+            --text-main: rgba(240, 253, 250, 0.96);
+            --text-soft: rgba(203, 239, 232, 0.74);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            overflow: hidden;
+            background: #04110d;
+            font-family: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text-main);
+        }
+
+        body {
+            position: relative;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(58, 255, 150, 0.08), transparent 28%),
+                radial-gradient(circle at 80% 18%, rgba(76, 255, 185, 0.06), transparent 24%),
+                linear-gradient(180deg, #081613 0%, #04110d 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(120deg, rgba(255,255,255,0.03), transparent 30%, rgba(255,255,255,0.02) 50%, transparent 65%),
+                radial-gradient(circle at top, rgba(57,255,136,0.10), transparent 40%);
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #riverCanvas, #rippleCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #riverCanvas { z-index: 0; }
+        #rippleCanvas { z-index: 5; pointer-events: none; }
+
+        .purify-flash {
+            position: fixed;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(186, 230, 253, 0.92) 0%, rgba(14, 165, 233, 0.28) 18%, rgba(14, 165, 233, 0.12) 32%, transparent 55%);
+            transition: opacity 1.5s ease;
+            mix-blend-mode: screen;
+        }
+
+        body.purifying .purify-flash {
+            opacity: 1;
+            animation: purifyWave 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes purifyWave {
+            0% { transform: scale(0.1); opacity: 0.18; }
+            35% { opacity: 0.95; }
+            100% { transform: scale(3.6); opacity: 0; }
+        }
+
+        .scene {
+            position: relative;
+            z-index: 6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .river-card {
+            position: relative;
+            width: min(100%, 460px);
+            border-radius: 32px;
+            padding: 1.25rem;
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, 0.42),
+                inset 0 0 0 1px rgba(255,255,255,0.08),
+                0 0 40px rgba(57, 255, 136, 0.08);
+            overflow: hidden;
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            isolation: isolate;
+            transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.7s ease, border-color 0.7s ease;
+        }
+
+        body.clean-mode .river-card {
+            box-shadow:
+                0 28px 100px rgba(2, 132, 199, 0.24),
+                inset 0 0 0 1px rgba(255,255,255,0.10),
+                0 0 52px rgba(125, 211, 252, 0.18);
+            border-color: rgba(186, 230, 253, 0.28);
+        }
+
+        body.purifying .river-card {
+            animation: cardPurify 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardPurify {
+            0% { transform: scale(1); }
+            20% { transform: scale(0.97) translateY(2px); }
+            55% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .river-card::before,
+        .river-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .river-card::before {
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.22), transparent 20%, transparent 70%, rgba(255,255,255,0.06)),
+                radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 28%);
+            opacity: 0.95;
+            z-index: -2;
+        }
+
+        .river-card::after {
+            inset: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            z-index: -1;
+        }
+
+        .reactor-column {
+            position: absolute;
+            top: 18px;
+            bottom: 18px;
+            left: 18px;
+            width: 86px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.16);
+            overflow: hidden;
+            box-shadow: inset 0 10px 30px rgba(255,255,255,0.06), inset 0 -18px 25px rgba(0,0,0,0.18);
+        }
+
+        .reactor-column::before,
+        .reactor-column::after {
+            content: "";
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.32), rgba(255,255,255,0.12));
+        }
+
+        .reactor-column::before { top: 14px; }
+        .reactor-column::after { bottom: 14px; }
+
+        .column-liquid {
+            position: absolute;
+            inset: 18px 10px 18px;
+            border-radius: 18px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(18, 44, 36, 0.76), rgba(10, 24, 20, 0.92));
+            box-shadow: inset 0 0 24px rgba(0,0,0,0.28);
+            transition: background 0.8s ease, box-shadow 0.8s ease;
+        }
+
+        body.clean-mode .column-liquid {
+            background: linear-gradient(180deg, rgba(54, 182, 255, 0.52), rgba(7, 63, 109, 0.82));
+            box-shadow: inset 0 0 28px rgba(186, 230, 253, 0.18);
+        }
+
+        .column-liquid::before {
+            content: "";
+            position: absolute;
+            left: -12%;
+            right: -12%;
+            top: 8%;
+            height: 16%;
+            border-radius: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.02));
+            filter: blur(2px);
+            animation: fluidSurface 4s ease-in-out infinite;
+        }
+
+        @keyframes fluidSurface {
+            0%, 100% { transform: translateY(0) scaleX(1); }
+            50% { transform: translateY(6px) scaleX(1.06); }
+        }
+
+        .column-particles,
+        .column-bubbles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .impurity,
+        .bubble {
+            position: absolute;
+            border-radius: 999px;
+            opacity: 0.8;
+        }
+
+        .impurity {
+            background: radial-gradient(circle at 30% 30%, rgba(196,255,121,0.95), rgba(64, 109, 59, 0.25) 70%, transparent 100%);
+            box-shadow: 0 0 12px rgba(141, 255, 87, 0.2);
+            animation: impurityDrift var(--dur, 5s) ease-in-out infinite;
+        }
+
+        @keyframes impurityDrift {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(0.95); }
+            40% { transform: translate3d(4px, -12px, 0) scale(1.05); }
+            70% { transform: translate3d(-5px, 8px, 0) scale(0.98); }
+        }
+
+        .bubble {
+            background: radial-gradient(circle at 35% 35%, rgba(210,255,224,0.95), rgba(34,197,94,0.18) 60%, rgba(14,165,233,0.05) 100%);
+            border: 1px solid rgba(187, 247, 208, 0.45);
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+            animation: bubbleRise var(--dur, 6s) linear infinite;
+            opacity: 0;
+        }
+
+        body.clean-mode .bubble { opacity: 0.9; }
+        body.clean-mode .impurity { opacity: 0.15; }
+
+        @keyframes bubbleRise {
+            0% { transform: translateY(34px) scale(0.76); opacity: 0; }
+            15% { opacity: 0.8; }
+            100% { transform: translateY(-170px) scale(1.05); opacity: 0; }
+        }
+
+        .card-content {
+            padding-left: 102px;
+            position: relative;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(11, 32, 24, 0.56);
+            border: 1px solid rgba(116, 255, 164, 0.18);
+            color: rgba(213, 255, 228, 0.88);
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            box-shadow: inset 0 0 18px rgba(57,255,136,0.08);
+            transition: all 0.6s ease;
+        }
+
+        body.clean-mode .status-chip {
+            background: rgba(2, 132, 199, 0.16);
+            border-color: rgba(186, 230, 253, 0.32);
+            color: rgba(224, 242, 254, 0.96);
+            box-shadow: inset 0 0 18px rgba(125,211,252,0.12);
+        }
+
+        .status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 999px;
+            background: #86efac;
+            box-shadow: 0 0 14px rgba(57,255,136,0.75);
+            animation: blink 1.8s ease-in-out infinite;
+        }
+
+        body.clean-mode .status-dot {
+            background: #7dd3fc;
+            box-shadow: 0 0 16px rgba(125,211,252,0.78);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        .field-shell {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+            border: 1px solid rgba(212, 255, 226, 0.10);
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+            box-shadow: inset 0 0 16px rgba(255,255,255,0.04);
+            transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+        }
+
+        .field-shell:focus-within {
+            border-color: rgba(125, 211, 252, 0.45);
+            box-shadow: 0 0 0 1px rgba(125,211,252,0.22), inset 0 0 18px rgba(125,211,252,0.08), 0 0 20px rgba(14,165,233,0.12);
+            transform: translateY(-1px);
+        }
+
+        .field-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+            transform: translateX(-100%);
+            animation: shellSweep 5.4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shellSweep {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(130%); }
+        }
+
+        .field-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: rgba(248, 250, 252, 0.96);
+        }
+
+        .field-input::placeholder {
+            color: rgba(207, 250, 232, 0.38);
+        }
+
+        .reactor-button {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(34,197,94,0.92), rgba(14,165,233,0.84));
+            box-shadow: 0 12px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+
+        .reactor-button::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.24), transparent);
+            transform: translateX(-120%);
+            transition: transform 0.8s ease;
+        }
+
+        .reactor-button:hover::before {
+            transform: translateX(120%);
+        }
+
+        .water-rings {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: inherit;
+        }
+
+        .water-ring {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(186, 230, 253, 0.68);
+            transform: translate(-50%, -50%) scale(0.3);
+            animation: waterRing 1.2s ease-out forwards;
+            box-shadow: 0 0 20px rgba(125,211,252,0.16);
+        }
+
+        @keyframes waterRing {
+            0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.25); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(9.4); }
+        }
+
+        .secondary-link {
+            position: relative;
+            color: rgba(208, 250, 239, 0.88);
+            transition: color 0.35s ease;
+        }
+
+        .secondary-link:hover { color: white; }
+
+        .secondary-link::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -3px;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(134,239,172,0.2), rgba(125,211,252,0.9), rgba(134,239,172,0.2));
+            transform: scaleX(0.3);
+            transform-origin: center;
+            opacity: 0;
+            transition: all 0.35s ease;
+        }
+
+        .secondary-link:hover::after {
+            transform: scaleX(1);
+            opacity: 1;
+        }
+
+        .message-box {
+            min-height: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .muted-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: radial-gradient(circle at center, black 48%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .floating-caption {
+            position: fixed;
+            left: max(1.25rem, 4vw);
+            top: max(1.25rem, 4vw);
+            z-index: 6;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            body { overflow-y: auto; }
+            .scene { padding: 1rem; align-items: flex-start; }
+            .floating-caption { position: relative; left: auto; top: auto; margin: 1rem 1rem 0; }
+            .river-card { width: 100%; max-width: 100%; }
+            .reactor-column { position: relative; left: auto; top: auto; bottom: auto; width: 100%; height: 86px; margin-bottom: 1rem; }
+            .column-liquid { inset: 10px 18px; }
+            .card-content { padding-left: 0; }
+        }
+    </style>
+
+<script src="static/mock-api.js"></script>
+</head>
+<body data-page-mode="login">
+    <canvas id="riverCanvas"></canvas>
+    <canvas id="rippleCanvas"></canvas>
+    <div class="muted-grid"></div>
+    <div class="purify-flash" id="purifyFlash"></div>
+
+    <header class="floating-caption">
+        <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.35em] text-emerald-100/75 backdrop-blur-xl">
+            <span class="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.9)]"></span>
+            River Pollution Monitor
+        </div>
+        <h1 class="mt-5 text-3xl font-semibold leading-tight text-slate-50 md:text-5xl">污水取样玻璃舱</h1>
+        <p class="mt-4 max-w-xl text-sm leading-7 text-emerald-50/70 md:text-base">
+            在污染态下进行登录校验。背景河流保持轻度浑浊的工业墨绿，卡片内部模拟取样管液体与杂质微粒晃动。
+        </p>
+    </header>
+
+    <main class="scene">
+        <form id="loginForm" class="river-card">
+            <div class="reactor-column">
+                <div class="column-liquid">
+                    <div class="column-particles" id="impurityField"></div>
+                    <div class="column-bubbles" id="bubbleField"></div>
+                </div>
+            </div>
+
+            <div class="water-rings" id="cardRings"></div>
+
+            <div class="card-content">
+                <div class="status-chip">
+                    <span class="status-dot"></span>
+                    <span id="statusText">污染样本采集中</span>
+                </div>
+
+                <div class="mt-6">
+                    <p class="text-xs uppercase tracking-[0.35em] text-emerald-100/45">Login Reactor</p>
+                    <h2 class="mt-3 text-3xl font-semibold text-white">登录系统</h2>
+                    <p class="mt-3 text-sm leading-7 text-emerald-50/65">
+                        输入用户名和密码时，取样液中的杂质将产生轻微扰动，模拟河流污染监测中的微粒响应。
+                    </p>
+                </div>
+
+                <div class="mt-8 space-y-5">
+                    <label class="block">
+                        <span class="mb-2 block text-sm text-emerald-50/70">用户名</span>
+                        <div class="field-shell">
+                            <input id="username" name="username" type="text" required placeholder="请输入用户名" class="field-input px-4 py-4 text-sm md:text-base">
+                        </div>
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-2 block text-sm text-emerald-50/70">密码</span>
+                        <div class="field-shell">
+                            <input id="password" name="password" type="password" required placeholder="请输入密码" class="field-input px-4 py-4 text-sm md:text-base">
+                        </div>
+                    </label>
+                </div>
+
+                <button type="submit" class="reactor-button mt-8 flex h-14 w-full items-center justify-center rounded-2xl text-base font-semibold text-white transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(14,165,233,0.22)]">
+                    启动取样登录
+                </button>
+
+                <div id="message" class="message-box mt-4 text-sm text-emerald-100/80"></div>
+
+                <div class="mt-7 flex flex-wrap items-center justify-between gap-4 text-sm">
+                    <a href="forgot_password.html" class="secondary-link">忘记密码</a>
+                    <a href="register.html" id="registerLink" class="secondary-link">没有账号？去注册</a>
+                </div>
+
+                <button type="button" id="guestLoginBtn" class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl text-sm font-medium text-emerald-300/90 transition duration-300 border border-emerald-400/30 hover:bg-emerald-400/10 hover:border-emerald-400/50">
+                    游客登录（免注册）
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <div id="banNoticeModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(2,12,27,0.92); backdrop-filter:blur(10px); justify-content:center; align-items:center; opacity:0; transition: opacity .55s ease;">
+        <div id="banNoticeCard" style="max-width:540px; background: linear-gradient(135deg, rgba(10,25,47,0.92), rgba(2,12,27,0.92)); border-radius:18px; padding:28px; border:1px solid rgba(0,198,255,0.22); box-shadow:0 18px 60px rgba(0,114,255,0.18); max-height:90vh; overflow-y:auto; transform: translateY(12px) scale(0.98); opacity:0; transition: transform .55s ease, opacity .55s ease;">
+            <h2 style="color:#ff5722; margin-bottom:16px; font-size:1.3em;">【账号限时封禁通知】</h2>
+            <p id="banNoticeIntro" style="margin-bottom:12px; line-height:1.7;"></p>
+            <div style="background:rgba(0,198,255,0.08); border-radius:10px; padding:14px; margin:14px 0;">
+                <p style="margin:6px 0;"><strong>封禁原因：</strong><span id="banNoticeReason"></span></p>
+                <p style="margin:6px 0;"><strong>封禁开始时间：</strong><span id="banNoticeStart"></span></p>
+                <p style="margin:6px 0;"><strong>封禁结束时间：</strong><span id="banNoticeEnd"></span></p>
+                <p style="margin:6px 0;"><strong>解封剩余时间：</strong><span id="banNoticeRemaining"></span></p>
+            </div>
+            <p style="font-size:0.95em; margin:10px 0;"><strong>重要提醒</strong></p>
+            <ul style="margin:8px 0 16px 20px; line-height:1.7;">
+                <li>在封禁期间，您将无法登录系统及使用所有功能。</li>
+                <li>封禁到期后将自动解封，您可以正常登录。</li>
+                <li>如您认为此次封禁有误，或有任何申诉，请通过以下方式联系管理员：<br>
+                  申诉邮箱：<a href="account_feedback.html" style="color:#7dd3fc; text-decoration: underline; font-weight: 600;">3025518478@qq.com（点此提交申诉）</a><br>
+                  请在申诉页中提供您的用户名、邮箱和本次封禁通知的截图。</li>
+            </ul>
+            <p style="color:rgba(226,232,240,.8); font-size:0.9em; margin-top:16px;">感谢您的理解与配合。我们共同维护河流检测系统的良好环境。</p>
+            <p style="color:rgba(226,232,240,.65); font-size:0.85em; margin-top:8px;">[河流污染监测平台] 管理团队</p>
+            <button type="button" onclick="closeBanNoticeModal()" style="margin-top:20px; padding:10px 24px; background:linear-gradient(45deg, #22c55e, #0ea5e9); border:none; border-radius:10px; color:#fff; cursor:pointer; font-size:1em;">我知道了</button>
+        </div>
+    </div>
+
+    <script>
+        let __banRemainTimer = null;
+        let __banRemainBase = null;
+
+        function formatRemainToSecond(totalSeconds) {
+            const s = Math.max(0, Math.floor(totalSeconds));
+            const days = Math.floor(s / 86400);
+            const hours = Math.floor((s % 86400) / 3600);
+            const minutes = Math.floor((s % 3600) / 60);
+            const seconds = s % 60;
+            const hh = String(hours).padStart(2, '0');
+            const mm = String(minutes).padStart(2, '0');
+            const ss = String(seconds).padStart(2, '0');
+            return days > 0 ? `${days}天 ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`;
+        }
+
+        function startBanCountdown(remainingSeconds) {
+            const el = document.getElementById('banNoticeRemaining');
+            if (!el) return;
+            if (__banRemainTimer) clearInterval(__banRemainTimer);
+            __banRemainBase = { seconds: Number(remainingSeconds || 0), startMs: Date.now() };
+            const tick = () => {
+                const elapsed = (Date.now() - __banRemainBase.startMs) / 1000;
+                const left = __banRemainBase.seconds - elapsed;
+                el.textContent = formatRemainToSecond(left);
+            };
+            tick();
+            __banRemainTimer = setInterval(tick, 250);
+        }
+
+        function showBanNoticeModal(banInfo) {
+            document.getElementById('banNoticeIntro').textContent = '尊敬的用户 ' + (banInfo.username || '') + '：您的账号因“' + (banInfo.reason || '') + '”，已被管理员执行限时封禁。';
+            document.getElementById('banNoticeReason').textContent = banInfo.reason || '—';
+            document.getElementById('banNoticeStart').textContent = banInfo.ban_start_at || '—';
+            document.getElementById('banNoticeEnd').textContent = banInfo.banned_until || '—';
+            startBanCountdown(banInfo.remaining_seconds || 0);
+            const modal = document.getElementById('banNoticeModal');
+            const card = document.getElementById('banNoticeCard');
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.style.opacity = '1';
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0) scale(1)';
+                }
+            });
+        }
+
+        function closeBanNoticeModal() {
+            const modal = document.getElementById('banNoticeModal');
+            const card = document.getElementById('banNoticeCard');
+            modal.style.opacity = '0';
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(12px) scale(0.98)';
+            }
+            if (__banRemainTimer) {
+                clearInterval(__banRemainTimer);
+                __banRemainTimer = null;
+            }
+            setTimeout(() => { modal.style.display = 'none'; }, 560);
+        }
+
+        document.getElementById('banNoticeModal').addEventListener('click', function (e) {
+            if (e.target && e.target.id === 'banNoticeModal') closeBanNoticeModal();
+        });
+
+        function showMessage(text, type) {
+            const box = document.getElementById('message');
+            box.textContent = text || '';
+            box.className = 'message-box mt-4 text-sm';
+            if (type === 'error') box.classList.add('text-rose-300');
+            if (type === 'success') box.classList.add('text-sky-200');
+            if (!type) box.classList.add('text-emerald-100/80');
+        }
+
+        const body = document.body;
+        const riverCanvas = document.getElementById('riverCanvas');
+        const rippleCanvas = document.getElementById('rippleCanvas');
+        const riverCtx = riverCanvas.getContext('2d');
+        const rippleCtx = rippleCanvas.getContext('2d');
+        const statusText = document.getElementById('statusText');
+        const impurityField = document.getElementById('impurityField');
+        const bubbleField = document.getElementById('bubbleField');
+        const cardRings = document.getElementById('cardRings');
+        const registerLink = document.getElementById('registerLink');
+        const inputs = Array.from(document.querySelectorAll('.field-input'));
+
+        const colorState = {
+            polluted: { r: 26, g: 46, b: 38 },
+            pollutedGlow: { r: 57, g: 255, b: 136 },
+            clean: { r: 14, g: 165, b: 233 },
+            cleanGlow: { r: 125, g: 211, b: 252 },
+            mix: 0
+        };
+
+        const particles = [];
+        const ripples = [];
+        let mouseFieldEnergy = 0;
+        let lastTime = 0;
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+        function mixColor(a, b, t) { return { r: lerp(a.r, b.r, t), g: lerp(a.g, b.g, t), b: lerp(a.b, b.b, t) }; }
+        function colorToString(c, alpha) { return `rgba(${c.r.toFixed(0)}, ${c.g.toFixed(0)}, ${c.b.toFixed(0)}, ${alpha})`; }
+        function random(min, max) { return Math.random() * (max - min) + min; }
+
+        function setCanvasSize() {
+            const dpr = window.devicePixelRatio || 1;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            [riverCanvas, rippleCanvas].forEach((canvas) => {
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+                canvas.style.width = w + 'px';
+                canvas.style.height = h + 'px';
+            });
+            riverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            rippleCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            initParticles();
+        }
+
+        function initParticles() {
+            particles.length = 0;
+            const count = Math.max(90, Math.floor((window.innerWidth * window.innerHeight) / 14000));
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    size: random(1.2, 4.2),
+                    speedX: random(0.15, 0.65),
+                    speedY: random(-0.2, 0.2),
+                    sway: random(0, Math.PI * 2),
+                    life: random(0.2, 1)
+                });
+            }
+        }
+
+        function seedColumnParticles() {
+            impurityField.innerHTML = '';
+            bubbleField.innerHTML = '';
+            for (let i = 0; i < 18; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'impurity';
+                const size = random(4, 10);
+                dot.style.width = `${size}px`;
+                dot.style.height = `${size}px`;
+                dot.style.left = `${random(10, 80)}%`;
+                dot.style.top = `${random(14, 86)}%`;
+                dot.style.setProperty('--dur', `${random(3.8, 7.4)}s`);
+                dot.style.animationDelay = `${random(0, 3)}s`;
+                impurityField.appendChild(dot);
+            }
+            for (let i = 0; i < 14; i++) {
+                const bubble = document.createElement('span');
+                bubble.className = 'bubble';
+                const size = random(7, 18);
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${random(8, 78)}%`;
+                bubble.style.bottom = `${random(-8, 28)}px`;
+                bubble.style.setProperty('--dur', `${random(4.2, 8.6)}s`);
+                bubble.style.animationDelay = `${random(0, 5)}s`;
+                bubbleField.appendChild(bubble);
+            }
+        }
+
+        function drawBackground(delta, time) {
+            const mix = colorState.mix;
+            const base = mixColor(colorState.polluted, colorState.clean, mix);
+            const glow = mixColor(colorState.pollutedGlow, colorState.cleanGlow, mix);
+
+            const bg = riverCtx.createLinearGradient(0, 0, 0, window.innerHeight);
+            bg.addColorStop(0, colorToString({ r: lerp(7, 3, mix), g: lerp(17, 27, mix), b: lerp(14, 42, mix) }, 1));
+            bg.addColorStop(1, colorToString({ r: base.r * 0.45, g: base.g * 0.55, b: base.b * 0.62 }, 1));
+            riverCtx.fillStyle = bg;
+            riverCtx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+            const waveLayers = 4;
+            for (let j = 0; j < waveLayers; j++) {
+                riverCtx.beginPath();
+                const amp = 14 + j * 8 + mix * 6;
+                const freq = 0.004 + j * 0.0014;
+                const yBase = window.innerHeight * (0.24 + j * 0.18);
+                for (let x = 0; x <= window.innerWidth; x += 12) {
+                    const y = yBase + Math.sin(x * freq + time * 0.0005 * (j + 1.2)) * amp + Math.cos(x * freq * 0.42 + time * 0.0003 + j) * 8;
+                    if (x === 0) riverCtx.moveTo(x, y);
+                    else riverCtx.lineTo(x, y);
+                }
+                riverCtx.lineTo(window.innerWidth, window.innerHeight);
+                riverCtx.lineTo(0, window.innerHeight);
+                riverCtx.closePath();
+                riverCtx.fillStyle = colorToString(glow, 0.035 + j * 0.018 + mix * 0.015);
+                riverCtx.fill();
+            }
+
+            particles.forEach((p, index) => {
+                p.x += p.speedX * delta * 0.04 + Math.sin(time * 0.0012 + p.sway) * 0.14;
+                p.y += p.speedY * delta * 0.03 + Math.cos(time * 0.0009 + index) * 0.05;
+                if (p.x > window.innerWidth + 30) p.x = -20;
+                if (p.y > window.innerHeight + 20) p.y = -20;
+                if (p.y < -20) p.y = window.innerHeight + 20;
+
+                const pulse = 0.45 + Math.sin(time * 0.0015 + p.sway) * 0.2 + mouseFieldEnergy * 0.25;
+                riverCtx.beginPath();
+                riverCtx.fillStyle = colorToString(glow, Math.max(0.12, p.life * 0.42 + pulse * 0.14));
+                riverCtx.shadowBlur = 12 + pulse * 10;
+                riverCtx.shadowColor = colorToString(glow, 0.35);
+                riverCtx.arc(p.x, p.y, p.size + pulse, 0, Math.PI * 2);
+                riverCtx.fill();
+            });
+            riverCtx.shadowBlur = 0;
+
+            for (let i = 0; i < particles.length; i += 6) {
+                const a = particles[i];
+                const b = particles[(i + 9) % particles.length];
+                riverCtx.beginPath();
+                riverCtx.strokeStyle = colorToString(glow, 0.05 + mix * 0.05);
+                riverCtx.lineWidth = 1;
+                riverCtx.moveTo(a.x, a.y);
+                riverCtx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 + Math.sin(time * 0.001 + i) * 18, b.x, b.y);
+                riverCtx.stroke();
+            }
+        }
+
+        function drawRipples(delta) {
+            rippleCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                const ripple = ripples[i];
+                ripple.radius += ripple.speed * delta * 0.035;
+                ripple.alpha -= delta * 0.0008;
+                if (ripple.alpha <= 0) {
+                    ripples.splice(i, 1);
+                    continue;
+                }
+                rippleCtx.beginPath();
+                rippleCtx.strokeStyle = `rgba(186,230,253,${ripple.alpha})`;
+                rippleCtx.lineWidth = 1.2;
+                rippleCtx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+                rippleCtx.stroke();
+            }
+        }
+
+        function animate(time) {
+            const delta = time - lastTime || 16;
+            lastTime = time;
+            colorState.mix += ((body.classList.contains('clean-mode') ? 1 : 0) - colorState.mix) * 0.035;
+            mouseFieldEnergy *= 0.96;
+            drawBackground(delta, time);
+            drawRipples(delta);
+            requestAnimationFrame(animate);
+        }
+
+        function createFocusRipple(target) {
+            const rect = target.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            ripples.push({ x, y, radius: 8, alpha: 0.65, speed: 4.2 });
+
+            const shell = target.closest('.field-shell');
+            if (shell) {
+                const ring = document.createElement('span');
+                ring.className = 'water-ring';
+                ring.style.left = '50%';
+                ring.style.top = '50%';
+                shell.appendChild(ring);
+                setTimeout(() => ring.remove(), 1200);
+            }
+        }
+
+        function createCardRipple(x, y) {
+            const ring = document.createElement('span');
+            ring.className = 'water-ring';
+            ring.style.left = `${x}px`;
+            ring.style.top = `${y}px`;
+            cardRings.appendChild(ring);
+            setTimeout(() => ring.remove(), 1200);
+        }
+
+        function triggerPurifyWave(event) {
+            const flash = document.getElementById('purifyFlash');
+            const x = event ? event.clientX : window.innerWidth / 2;
+            const y = event ? event.clientY : window.innerHeight / 2;
+            flash.style.setProperty('--x', `${x}px`);
+            flash.style.setProperty('--y', `${y}px`);
+            body.classList.add('purifying');
+            body.classList.add('clean-mode');
+            statusText.textContent = '净化剂已注入';
+            registerLink.textContent = '注入净化剂';
+            createCardRipple(x - document.querySelector('.river-card').getBoundingClientRect().left, y - document.querySelector('.river-card').getBoundingClientRect().top);
+            setTimeout(() => body.classList.remove('purifying'), 1500);
+        }
+
+        registerLink.addEventListener('mouseenter', function () {
+            this.textContent = '注入净化剂';
+        });
+        registerLink.addEventListener('mouseleave', function () {
+            this.textContent = '没有账号？去注册';
+        });
+        registerLink.addEventListener('click', function (event) {
+            event.preventDefault();
+            triggerPurifyWave(event);
+            setTimeout(() => { window.location.href = 'register.html'; }, 900);
+        });
+
+        inputs.forEach((input) => {
+            input.addEventListener('focus', () => createFocusRipple(input));
+            input.addEventListener('input', () => {
+                mouseFieldEnergy = Math.min(1, mouseFieldEnergy + 0.18);
+                statusText.textContent = '杂质微粒正在扰动';
+                impurityField.childNodes.forEach((node, idx) => {
+                    node.style.transform = `translate(${Math.sin(Date.now() * 0.008 + idx) * 4}px, ${Math.cos(Date.now() * 0.01 + idx) * 3}px)`;
+                });
+                clearTimeout(input._statusTimer);
+                input._statusTimer = setTimeout(() => {
+                    statusText.textContent = body.classList.contains('clean-mode') ? '净化剂已注入' : '污染样本采集中';
+                }, 1200);
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            showMessage('正在进行样本校验...', 'success');
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(function (res) {
+                return res.json().then(function (data) {
+                    if (res.ok && data.message === '登录成功') {
+                        showMessage('校验通过，正在进入系统...', 'success');
+                        setTimeout(function () {
+                            if (data.is_admin) {
+                                window.location.href = 'admin.html';
+                            } else {
+                                window.location.href = 'Untitled-1.html';
+                            }
+                        }, 280);
+                    } else if (res.status === 403 && data.banned && data.ban_info) {
+                        showMessage('', '');
+                        showBanNoticeModal(data.ban_info);
+                    } else {
+                        showMessage(data.error || '登录失败', 'error');
+                    }
+                });
+            })
+            .catch(function () {
+                showMessage('网络错误，请重试', 'error');
+            });
+        });
+
+        window.addEventListener('resize', setCanvasSize);
+        seedColumnParticles();
+        setCanvasSize();
+        requestAnimationFrame(animate);
+
+        // ── 游客登录 ──
+        document.getElementById('guestLoginBtn').addEventListener('click', function () {
+            showMessage('正在以游客身份进入...', 'success');
+            if (window.guestLogin) {
+                setTimeout(function () { window.guestLogin(); }, 300);
+            } else {
+                setTimeout(function () { window.location.href = 'Untitled-1.html'; }, 300);
+            }
+        });
+    </script>
+</body>
+</html>

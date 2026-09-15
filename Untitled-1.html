@@ -1,0 +1,2397 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>河流污染监测系统</title>
+<style>
+:root {
+  --base-unit: min(1.6vh, 1.2vw);
+  --primary-color: #00c6ff;
+  --secondary-color: #0072ff;
+  --accent-color: #00ffcc;
+  --bg-dark: #0a192f;
+  --bg-darker: #020c1b;
+  --card-bg: rgba(10, 25, 47, 0.8);
+  --card-glass: rgba(100, 150, 255, 0.1);
+  --text-primary: #e6f1ff;
+  --text-secondary: #ccd6f6;
+  --card-shadow: 0 8px 32px rgba(0, 114, 255, 0.1);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --glow: 0 0 10px rgba(0, 198, 255, 0.7);
+}
+ 
+/* 在style标签内添加以下代码 */
+dialog {
+  color: var(--text-primary) !important;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+dialog[open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+dialog::backdrop {
+  background: rgba(2, 12, 27, 0.8);
+  backdrop-filter: blur(5px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+dialog[open]::backdrop {
+  opacity: 1;
+}
+
+dialog h2 {
+  font-size: 1.5em;
+  margin-bottom: 1.2em;
+  color: var(--accent-color) !important;
+  text-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease 0.1s;
+}
+
+dialog[open] h2 {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+dialog p {
+  font-size: 1.1em;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin-bottom: 1.5em;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease 0.2s;
+}
+
+dialog[open] p {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+dialog strong {
+  color: var(--primary-color) !important;
+  font-weight: 500;
+}
+
+dialog button {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease 0.3s;
+}
+
+dialog[open] button {
+  opacity: 1;
+  transform: translateY(0);
+}
+	
+@font-face {
+  font-family: "iconfont";
+  src: url('data:font/woff2;charset=utf-8;base64,d09GMgABAAAAAANQAA0AAAAAB0QAAALzAAEAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAP0ZGVE0cGh4GYACCShEICoJkgkILEAABNglkAxQEIAWFCAc8G6MFyJ6ULM7QsalUTW7YHtRzIBRCHh6u0fe/mZn7zZsveNJV7dLxqZ1OJzQyNcl0pRsqmealmrybGfj/99TekiEJr0u/+ebW8yXXgOTbk2PkUYmCOPi/uf3pHzAVFZdcOheXUnHppZeKi+Z5KUUUi9T/z8/Pt1OPt/WspVkSyZAlicT7MBqhQilb2ZAIhXVbgvmZl6RQgNRvXIECFKTSJDUzP7cgO6tYW5XK7+np7QNFiOQliOQExPJ0TvVBIr1FEfXVSAakrNoHhESJEQoSRLkR4c2C1pQVWY2ClAsF6QINyUiqLUpRE0h+bwNaUBkgbVnLFCAE8AECABCABrAA2AFOQhxgUoKwjdoXcRTYKEhPXnU2XZF7v0Hrzr4Lh/b7hm8GzWdEHMw/tWHFSNRpUHto1bCX/tO+xHtfQlP4YIRh/SBhTcZGfynbWY8k2LS2pVc+JMl41EHy6Qf180eSGn76KbHu51Pvk52VYUmTN3d/Pu+/KmDZxpcjYI7kDAD8Kxu/5nryJQDmWK4b9R38N+1V+AMsPJd+fYxbQ7iMIYSIZJMMqsOSLLKUiuZkyyGHnbLJvnEXJ0f7c8Q17dNxhPxzKaAUC8cAANAmkwxO8g2OAeQLRg94JzgXIMh5fXFukgMAQP+GAUBEADCqCBCpdkDSXCCxXJCsj0hs/8gMRvwkLmRLDhGUHEeRQwbkQMWlmSVLU5Y5kYlskkkyT5ZxZjn7LMiJRASXpJKlnSzxJMJ5J3FMcRJb9qlWIQeTNEJG5JR0SUrOpORCPskEZ2nKKSUmJJIiQo5EXMjOyjlbEnIJkkhzJ+KSnHB/Zi5KGbLQc20YbNQcSX9ZcuYMAA==') format('woff2');
+}
+ 
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: calc(var(--base-unit) * 2);
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+}
+ 
+.icon-camera:before { content: "\e7a6"; }
+.icon-info:before { content: "\e7a2"; }
+ 
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background: var(--bg-darker);
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  font-size: calc(var(--base-unit) * 1.2);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+ 
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 2560px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+ 
+.background {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+ 
+/* 高科技背景效果 */
+.tech-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(0, 198, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0, 114, 255, 0.15) 0%, transparent 40%),
+    linear-gradient(to bottom, var(--bg-darker) 0%, var(--bg-dark) 100%);
+  filter: blur(20px);
+  opacity: 0.8;
+  will-change: transform;
+  animation: bgPulse 10s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes bgPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 网格背景 */
+.grid-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0, 198, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 198, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  animation: gridMove 20s linear infinite;
+  will-change: transform;
+  z-index: 2;
+}
+
+@keyframes gridMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(40px); }
+}
+
+/* 高科技粒子效果 */
+.tech-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 198, 255, 0.8);
+  box-shadow: var(--glow);
+  animation: tech-float linear infinite;
+  z-index: 3;
+}
+ 
+@keyframes tech-float {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* 高级科技粒子特效 */
+.tech-circle {
+    position: absolute;
+    border: 1px solid rgba(0, 198, 255, 0.3);
+    border-radius: 50%;
+    animation: rotate 20s linear infinite;
+    z-index: 2;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.data-stream {
+    position: absolute;
+    color: rgba(0, 198, 255, 0.6);
+    font-family: monospace;
+    font-size: 12px;
+    white-space: nowrap;
+    animation: dataFlow 8s linear infinite;
+    z-index: 3;
+}
+
+@keyframes dataFlow {
+    0% {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh);
+        opacity: 0;
+    }
+}
+
+.scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent,
+        rgba(0, 198, 255, 0.8),
+        transparent
+    );
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+    animation: scan 4s linear infinite;
+    z-index: 4;
+}
+
+@keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+.tech-grid {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 198, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 198, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    transform: perspective(500px) rotateX(60deg);
+    transform-origin: top;
+    animation: gridMove 20s linear infinite;
+    z-index: 1;
+}
+
+@keyframes gridMove {
+    0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    100% { transform: perspective(500px) rotateX(60deg) translateY(20px); }
+}
+
+.energy-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center,
+        rgba(0, 198, 255, 0.1) 0%,
+        transparent 70%
+    );
+    animation: pulse 4s ease-in-out infinite;
+    z-index: 2;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.tech-node {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--primary-color);
+    animation: nodePulse 2s ease-in-out infinite;
+    z-index: 3;
+}
+
+@keyframes nodePulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 1; }
+}
+
+.water-quality-indicator {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg,
+        rgba(0, 255, 136, 0.1) 0%,
+        rgba(255, 187, 0, 0.1) 50%,
+        rgba(255, 68, 68, 0.1) 100%
+    );
+    opacity: 0.3;
+    z-index: 1;
+}
+
+/* 优化现有特效 */
+.water-ripple {
+    background: radial-gradient(circle, 
+        rgba(0, 198, 255, 0.3) 0%, 
+        rgba(0, 114, 255, 0.2) 50%,
+        transparent 70%
+    );
+    box-shadow: 0 0 20px rgba(0, 198, 255, 0.2);
+}
+
+.flowing-particle {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 198, 255, 0.8),
+        transparent
+    );
+    box-shadow: 0 0 15px rgba(0, 198, 255, 0.5);
+}
+
+.pollution-particle {
+    background: linear-gradient(45deg,
+        rgba(255, 68, 68, 0.6),
+        rgba(255, 187, 0, 0.6)
+    );
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.4);
+}
+
+.water-surface {
+    background: linear-gradient(180deg,
+        rgba(0, 198, 255, 0.15) 0%,
+        rgba(0, 114, 255, 0.1) 50%,
+        rgba(0, 198, 255, 0.15) 100%
+    );
+    backdrop-filter: blur(5px);
+}
+
+/* 连接线效果 */
+.connection-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 198, 255, 0.5), transparent);
+  transform-origin: left center;
+  animation: pulse 2s infinite alternate;
+  z-index: 2;
+}
+ 
+@keyframes pulse {
+  0% { opacity: 0.2; }
+  100% { opacity: 0.8; }
+}
+ 
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2vh 5vw 1vh;
+  z-index: 10;
+  position: relative;
+  flex-shrink: 0;
+}
+ 
+.logo {
+  width: 12vh;
+  height: 12vh;
+  min-width: 80px;
+  min-height: 80px;
+  border-radius: 50%;
+  margin-bottom: 3vh;
+  box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+  border: 2px solid rgba(0, 198, 255, 0.5);
+  background-color: rgba(10, 25, 47, 0.7);
+  object-fit: cover;
+  padding: 8px;
+  transition: var(--transition);
+  backdrop-filter: blur(5px);
+}
+ 
+.logo:hover {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 0 30px rgba(0, 198, 255, 0.8);
+}
+ 
+.title-box {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+ 
+.title {
+  font-size: clamp(24px, calc(var(--base-unit) * 3), 48px);
+  font-weight: 700;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 1vh;
+  text-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+  display: inline-block;
+  will-change: transform, opacity;
+  animation: titleFadeIn 1s ease-out;
+}
+
+@keyframes titleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+ 
+.floating-text {
+  display: inline-block;
+  animation: floating 3s ease-in-out infinite;
+}
+ 
+@keyframes floating {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+ 
+.subtitle {
+  font-size: clamp(16px, calc(var(--base-unit) * 1.5), 24px);
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 1vh;
+  font-weight: 400;
+  text-shadow: 0 0 5px rgba(0, 198, 255, 0.3);
+}
+ 
+.hero-actions {
+  position: relative;
+  padding: 0 6vw 2vh;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 10;
+  margin: 4vh auto 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+ 
+.card {
+  background: linear-gradient(135deg, var(--card-glass), rgba(0, 114, 255, 0.2));
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  will-change: transform;
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  backdrop-filter: blur(5px);
+  transform: translateZ(0);
+}
+
+.camera-primary {
+  width: min(60vw, 540px);
+  min-width: 300px;
+  min-height: 200px;
+  border-width: 1.5px;
+}
+
+.camera-primary .card-content {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.camera-primary .card-title {
+  font-size: clamp(20px, calc(var(--base-unit) * 2.3), 30px);
+  margin: 0;
+}
+
+.camera-primary .card-desc {
+  font-size: clamp(14px, calc(var(--base-unit) * 1.4), 18px);
+  margin: 0;
+}
+ 
+.card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color), var(--primary-color));
+  z-index: -1;
+  border-radius: 18px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+ 
+.card:hover::before {
+  opacity: 0.4;
+}
+ 
+.card:hover {
+  transform: translateY(-8px) scale(1.02) translateZ(0);
+  box-shadow: 0 15px 35px rgba(0, 114, 255, 0.3);
+}
+ 
+.card:active {
+  transform: scale(0.98);
+}
+ 
+.card-content {
+  display: flex;
+  padding: 32px;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  box-sizing: border-box;
+}
+ 
+.card-text {
+  flex: 1;
+  margin-right: 16px;
+}
+ 
+.card-icon {
+  width: calc(var(--base-unit) * 5);
+  height: calc(var(--base-unit) * 5);
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 198, 255, 0.2);
+  border-radius: 50%;
+  transition: var(--transition);
+  border: 1px solid rgba(0, 198, 255, 0.3);
+}
+ 
+.card:hover .card-icon {
+  transform: rotate(15deg) scale(1.1);
+  background-color: rgba(0, 198, 255, 0.4);
+  box-shadow: var(--glow);
+}
+ 
+.card-title {
+  font-size: clamp(18px, calc(var(--base-unit) * 2), 28px);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+ 
+.card-desc {
+  font-size: clamp(14px, calc(var(--base-unit) * 1.2), 18px);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+ 
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 198, 255, 0.4) 0%, rgba(0, 198, 255, 0) 70%);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+  animation: ripple 0.6s linear;
+}
+ 
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+ 
+.quick-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 20px 8vw;
+  z-index: 10;
+  position: relative;
+  max-width: 1200px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+ 
+.fact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--card-bg);
+  padding: 24px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 114, 255, 0.1);
+  transition: var(--transition);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+}
+ 
+.fact:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 114, 255, 0.2);
+}
+ 
+.fact-number {
+  font-size: clamp(24px, calc(var(--base-unit) * 2.5), 36px);
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 8px rgba(0, 198, 255, 0.5);
+}
+ 
+.fact-text {
+  font-size: clamp(14px, calc(var(--base-unit) * 1.2), 18px);
+  color: var(--text-secondary);
+  text-align: center;
+  font-weight: 500;
+}
+ 
+.footer {
+  padding: 8px 0;
+  text-align: center;
+  margin-top: auto;
+  z-index: 10;
+  position: relative;
+  background-color: rgba(10, 25, 47, 0.8);
+  backdrop-filter: blur(5px);
+  border-top: 1px solid rgba(0, 198, 255, 0.2);
+  flex-shrink: 0;
+}
+ 
+.footer-text {
+  font-size: clamp(14px, calc(var(--base-unit) * 1.2), 18px);
+  color: var(--text-secondary);
+}
+ 
+.user-info {
+  position: fixed;
+  top: 24px;
+  right: 36px;
+  z-index: 999;
+  background: rgba(10,25,47,0.85);
+  color: #00c6ff;
+  border-radius: 20px;
+  padding: 6px 18px 6px 10px;
+  font-size: 0.95em;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,198,255,0.12);
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-info:hover {
+  box-shadow: 0 8px 32px rgba(0,198,255,0.18);
+}
+
+#userAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid #00c6ff;
+  box-shadow: 0 0 0 4px rgba(0,198,255,0.12), 0 2px 8px rgba(0,198,255,0.12);
+  background: #fff;
+  transition: box-shadow 0.3s, border 0.3s;
+}
+
+.user-info.active #userAvatar, .user-info:hover #userAvatar {
+  box-shadow: 0 0 0 6px #00c6ff44, 0 8px 32px rgba(0,198,255,0.18);
+  border: 2.5px solid #00ffcc;
+}
+
+.dropdown-arrow {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 1.1em;
+  transition: transform 0.3s;
+}
+
+.user-info.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.user-info .dropdown {
+  display: none;
+  position: absolute;
+  top: 56px;
+  right: 0;
+  min-width: 180px;
+  background: rgba(10,25,47,0.98);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,198,255,0.18);
+  border: 1.5px solid rgba(0,198,255,0.10);
+  padding: 10px 0 10px 0;
+  animation: dropdownFade 0.25s;
+  transition: box-shadow 0.3s;
+  z-index: 1001;
+}
+
+.user-info.active .dropdown {
+  display: block;
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#dropdownUsername {
+  color: #00c6ff;
+  font-weight: 700;
+  font-size: 0.98em;
+  letter-spacing: 1px;
+  display: block;
+  text-align: center;
+  margin: 6px 0 4px;
+}
+
+.dropdown-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #00c6ff;
+  font-size: 1.02em;
+  padding: 12px 20px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.18s, color 0.18s, font-weight 0.18s;
+  text-align: left;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-btn-icon {
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 1.1em;
+}
+
+.dropdown-btn:hover {
+  background: rgba(0,198,255,0.10);
+  color: #00ffcc;
+  font-weight: 700;
+}
+
+.dropdown-btn.logout {
+  color: #ff4444;
+}
+
+.dropdown-btn.logout:hover {
+  background: rgba(255,68,68,0.08);
+  color: #fff;
+}
+
+.change-pwd-form {
+  background: linear-gradient(135deg, rgba(10,25,47,0.98) 80%, rgba(0,198,255,0.08));
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,198,255,0.18);
+  border: 1.5px solid rgba(0,198,255,0.18);
+  padding: 32px 28px 20px 28px;
+  min-width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
+  backdrop-filter: blur(10px);
+}
+
+.change-pwd-title {
+  color: var(--primary-color);
+  font-size: 1.5em;
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0,198,255,0.18);
+}
+
+.change-pwd-label {
+  color: var(--text-secondary);
+  font-size: 1em;
+  margin-bottom: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.change-pwd-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,198,255,0.18);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1em;
+  padding: 10px 12px;
+  margin-top: 2px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.change-pwd-input:focus {
+  outline: none;
+  border: 1.5px solid var(--primary-color);
+  box-shadow: 0 0 8px rgba(0,198,255,0.18);
+  background: rgba(0,198,255,0.06);
+}
+
+.change-pwd-btn {
+  flex: 1;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,198,255,0.08);
+}
+
+.change-pwd-btn:hover {
+  background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+  box-shadow: 0 4px 16px rgba(0,198,255,0.18);
+}
+
+.change-pwd-btn.cancel {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  border: 1px solid rgba(0,198,255,0.12);
+}
+
+.change-pwd-btn.cancel:hover {
+  background: rgba(0,198,255,0.08);
+  color: var(--primary-color);
+}
+
+.change-pwd-msg {
+  min-height: 18px;
+  font-size: 0.95em;
+  margin-top: -8px;
+  margin-bottom: 0;
+  text-align: center;
+  color: #ff4444;
+  transition: color 0.2s;
+}
+
+.change-pwd-msg.success {
+  color: #00ff88;
+}
+
+.nested-menu {
+  background: rgba(10,25,47,0.95);
+  border: 1px solid rgba(0,198,255,0.1);
+  border-radius: 10px;
+  margin-top: 6px;
+  padding: 6px;
+  display: none;
+}
+
+.dropdown-item {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #00c6ff;
+  font-size: 0.95em;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.18s, color 0.18s, font-weight 0.18s;
+  text-align: left;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item:hover {
+  background: rgba(0,198,255,0.10);
+  color: #00ffcc;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .user-info {
+    right: 10px;
+    top: 10px;
+    padding: 4px 8px 4px 4px;
+  }
+  .user-info .dropdown {
+    min-width: 150px;
+    right: -6px;
+  }
+  #userAvatar {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 4vh 5vw;
+    margin-top: 2vh;
+  }
+  
+  .card-container {
+    padding: 0 5vw;
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-facts {
+    padding: 24px 5vw;
+    grid-template-columns: 1fr;
+  }
+  
+  .card-content {
+    padding: 24px;
+  }
+}
+ 
+@media (min-width: 2000px) {
+  :root {
+    --base-unit: 1.4vh;
+  }
+}
+ 
+@media (hover: none) {
+  .card:hover, .fact:hover, .logo:hover {
+    transform: none !important;
+    box-shadow: var(--card-shadow) !important;
+  }
+  
+  .card:hover::before {
+    opacity: 0;
+  }
+}
+	
+/* 高级科技特效增强 */
+.hologram-effect {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 198, 255, 0.1) 0px,
+        rgba(0, 198, 255, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    animation: hologram 8s linear infinite;
+    z-index: 2;
+    pointer-events: none;
+}
+
+@keyframes hologram {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(2px); }
+}
+
+.tech-orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%,
+        rgba(0, 198, 255, 0.8),
+        rgba(0, 114, 255, 0.4) 40%,
+        transparent 70%
+    );
+    box-shadow: 
+        0 0 20px rgba(0, 198, 255, 0.4),
+        inset 0 0 20px rgba(0, 198, 255, 0.4);
+    animation: orbFloat 6s ease-in-out infinite;
+    z-index: 3;
+}
+
+@keyframes orbFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.1); }
+}
+
+.data-ring {
+    position: absolute;
+    border: 2px solid rgba(0, 198, 255, 0.3);
+    border-radius: 50%;
+    animation: ringRotate 10s linear infinite;
+    z-index: 2;
+}
+
+@keyframes ringRotate {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.water-wave {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 198, 255, 0.1) 50%,
+        transparent 100%
+    );
+    animation: wave 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes wave {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50% { transform: translateY(10px) scaleY(1.2); }
+}
+
+.tech-beam {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(0, 198, 255, 0.8),
+        transparent
+    );
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+    animation: beamScan 3s linear infinite;
+    z-index: 3;
+}
+
+@keyframes beamScan {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(200%) rotate(45deg); }
+}
+
+.quality-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at center,
+        rgba(0, 255, 136, 0.2) 0%,
+        rgba(255, 187, 0, 0.1) 50%,
+        rgba(255, 68, 68, 0.1) 100%
+    );
+    animation: qualityPulse 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes qualityPulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+/* 优化现有特效 */
+.tech-circle {
+    border-width: 2px;
+    box-shadow: 0 0 15px rgba(0, 198, 255, 0.3);
+}
+
+.data-stream {
+    text-shadow: 0 0 5px rgba(0, 198, 255, 0.5);
+    font-weight: bold;
+}
+
+.scan-line {
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 198, 255, 0.9),
+        transparent
+    );
+    box-shadow: 0 0 15px rgba(0, 198, 255, 0.6);
+}
+
+.tech-grid {
+    background-size: 30px 30px;
+    opacity: 0.7;
+}
+
+.energy-pulse {
+    background: radial-gradient(circle at center,
+        rgba(0, 198, 255, 0.2) 0%,
+        rgba(0, 114, 255, 0.1) 50%,
+        transparent 70%
+    );
+}
+
+.tech-node {
+    width: 6px;
+    height: 6px;
+    box-shadow: 0 0 15px var(--primary-color);
+}
+
+/* 确保内容在粒子效果之上 */
+.container {
+    position: relative;
+    z-index: 10;
+}
+
+/* 删除扫描线和质量脉冲相关样式 */
+.scan-line, .quality-pulse {
+    display: none;
+}
+
+/* 新增高级科技特效 */
+.tech-aurora {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        45deg,
+        rgba(0, 198, 255, 0.1) 0%,
+        rgba(0, 114, 255, 0.1) 25%,
+        rgba(0, 255, 204, 0.1) 50%,
+        rgba(0, 114, 255, 0.1) 75%,
+        rgba(0, 198, 255, 0.1) 100%
+    );
+    filter: blur(20px);
+    animation: aurora 15s ease infinite;
+    z-index: 1;
+}
+
+@keyframes aurora {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) rotate(180deg); }
+}
+
+.tech-nexus {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(0, 198, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(0, 114, 255, 0.15) 0%, transparent 50%);
+    animation: nexus 10s ease-in-out infinite;
+    z-index: 2;
+}
+
+@keyframes nexus {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.tech-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(0, 198, 255, 0.4) 0%,
+        rgba(0, 114, 255, 0.2) 50%,
+        transparent 70%
+    );
+    animation: ripple 4s ease-out infinite;
+    z-index: 3;
+}
+
+@keyframes ripple {
+    0% { transform: scale(0); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.tech-connection {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 198, 255, 0.8),
+        transparent
+    );
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+    animation: connect 3s ease-in-out infinite;
+    z-index: 2;
+}
+
+@keyframes connect {
+    0%, 100% { opacity: 0.2; transform: scaleX(0.8); }
+    50% { opacity: 0.8; transform: scaleX(1.2); }
+}
+
+/* 优化现有特效 */
+.tech-circle {
+    border-width: 2px;
+    box-shadow: 
+        0 0 20px rgba(0, 198, 255, 0.3),
+        inset 0 0 20px rgba(0, 198, 255, 0.2);
+}
+
+.data-stream {
+    text-shadow: 
+        0 0 5px rgba(0, 198, 255, 0.5),
+        0 0 10px rgba(0, 198, 255, 0.3);
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.tech-grid {
+    background-size: 40px 40px;
+    opacity: 0.6;
+    transform: perspective(1000px) rotateX(60deg);
+}
+
+.energy-pulse {
+    background: radial-gradient(circle at center,
+        rgba(0, 198, 255, 0.3) 0%,
+        rgba(0, 114, 255, 0.2) 40%,
+        transparent 70%
+    );
+    filter: blur(10px);
+}
+
+.tech-node {
+    width: 8px;
+    height: 8px;
+    box-shadow: 
+        0 0 15px var(--primary-color),
+        inset 0 0 10px var(--primary-color);
+}
+
+.water-ripple {
+    background: radial-gradient(circle,
+        rgba(0, 198, 255, 0.4) 0%,
+        rgba(0, 114, 255, 0.3) 40%,
+        transparent 70%
+    );
+    box-shadow: 
+        0 0 20px rgba(0, 198, 255, 0.3),
+        inset 0 0 20px rgba(0, 198, 255, 0.2);
+}
+
+.flowing-particle {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 198, 255, 0.9),
+        transparent
+    );
+    box-shadow: 
+        0 0 15px rgba(0, 198, 255, 0.6),
+        inset 0 0 10px rgba(0, 198, 255, 0.4);
+}
+
+.pollution-particle {
+    background: linear-gradient(45deg,
+        rgba(255, 68, 68, 0.7),
+        rgba(255, 187, 0, 0.7)
+    );
+    box-shadow: 
+        0 0 15px rgba(255, 68, 68, 0.5),
+        inset 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+/* 优化卡片动画 */
+.feature-card {
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px) scale(1.02) translateZ(0);
+    box-shadow: 0 15px 35px rgba(0, 114, 255, 0.3);
+}
+
+/* 优化按钮动画 */
+.btn {
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+    transform: translateY(-3px) scale(1.05) translateZ(0);
+    box-shadow: 0 8px 25px rgba(0, 198, 255, 0.4);
+}
+
+/* 优化标题动画 */
+.title {
+    will-change: transform, opacity;
+    animation: titleFadeIn 1s ease-out;
+}
+
+@keyframes titleFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 优化页面切换动画 */
+.page-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-darker);
+    z-index: 1000;
+    transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition.active {
+    transform: translateY(0);
+}
+
+/* 优化响应式布局 */
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 0 1rem;
+    }
+    
+    .feature-card {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .title {
+        font-size: 2rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+}
+</style>
+
+<script src="static/mock-api.js"></script>
+</head>
+ 
+<body>
+<div class="container">
+  <div class="background">
+    <div class="tech-bg"></div>
+    <div class="grid-lines"></div>
+    <div class="water-surface"></div>
+    <div class="tech-grid"></div>
+    <div class="energy-pulse"></div>
+    <div class="water-quality-indicator"></div>
+    <div class="hologram-effect"></div>
+    <div class="water-wave"></div>
+    <div class="tech-aurora"></div>
+    <div class="tech-nexus"></div>
+    <div id="particles"></div>
+    <div id="connections"></div>
+    <div id="water-ripples"></div>
+    <div id="flowing-particles"></div>
+    <div id="pollution-particles"></div>
+    <div id="tech-circles"></div>
+    <div id="data-streams"></div>
+    <div id="tech-nodes"></div>
+    <div id="tech-orbs"></div>
+    <div id="data-rings"></div>
+    <div id="tech-beams"></div>
+    <div id="tech-ripples"></div>
+    <div id="tech-connections"></div>
+  </div>
+
+  <div class="user-info" id="userInfo">
+    <img id="userAvatar" src="static/河流景观图片.png" alt="头像">
+    <span class="dropdown-arrow">▼</span>
+    <div class="dropdown" id="userDropdown">
+      <div style="padding:8px 0 8px 0;text-align:center;">
+        <span id="dropdownUsername"></span>
+      </div>
+      <button class="dropdown-btn" id="personalMenuToggle"><span class="dropdown-btn-icon">👤</span>个人信息 ▸</button>
+      <div class="nested-menu" id="personalMenu">
+        <button class="dropdown-item" id="uploadAvatarBtn">📷 上传头像</button>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+        <button class="dropdown-item" id="changePwdBtn">🔒 修改密码</button>
+        <button class="dropdown-item" id="deleteAccountBtn">🗑️ 注销账号</button>
+        <button class="dropdown-item logout" id="logoutBtn">🚪 退出登录</button>
+      </div>
+      <button class="dropdown-btn" id="historyBtn"><span class="dropdown-btn-icon">📋</span>历史记录</button>
+      <button class="dropdown-btn" id="feedbackStatusBtn"><span class="dropdown-btn-icon">📊</span>反馈进度</button>
+      <button class="dropdown-btn" id="achievementLink"><span class="dropdown-btn-icon">🏆</span>查看成就</button>
+      <button class="dropdown-btn" id="communityLink"><span class="dropdown-btn-icon">👥</span>社区</button>
+    </div>
+  </div>
+
+  <div class="header">
+    <img class="logo" src="static/河流景观图片.png" alt="系统Logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzBhMTkyZiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iNjAiIGZpbGw9IiMwMGM2ZmYiLz48cGF0aCBkPSJNODAgODBjMCAxMSA5IDIwIDIwIDIwczIwLTkgMjAtMjAtOS0yMC0yMCA5LTIwIDIwIiBmaWxsPSIjMDBjNmZmIi8+PC9zdmc+'">
+    <div class="title-box">
+      <h1 class="title floating-text">河流污染监测系统</h1>
+      <p class="subtitle">保护水资源，共建美好家园</p>
+    </div>
+  </div>
+ 
+  <div class="hero-actions">
+    <div class="card camera-primary" id="cameraCard">
+      <div class="card-content">
+        <div class="card-text">
+          <h2 class="card-title">拍照分析</h2>
+          <p class="card-desc">拍摄或选择照片进行河流污染智能诊断</p>
+        </div>
+        <div class="card-icon">
+          <span class="iconfont icon-camera"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <div class="quick-facts">
+    <div class="fact">
+      <span class="fact-number">71%</span>
+      <span class="fact-text">地球被水覆盖</span>
+    </div>
+    <div class="fact">
+      <span class="fact-number">3%</span>
+      <span class="fact-text">仅为淡水资源</span>
+    </div>
+    <div class="fact">
+      <span class="fact-number">1.1B</span>
+      <span class="fact-text">人口缺乏安全饮用水</span>
+    </div>
+  </div>
+ 
+  <div class="footer">
+    <span class="footer-text">©2025 河流污染监测系统 | 保护水资源，人人有责</span>
+  </div>
+
+  <dialog id="changePwdDialog" style="padding:0;border:none;background:transparent;">
+    <form id="changePwdForm" method="dialog" class="change-pwd-form">
+      <h3 class="change-pwd-title">修改密码</h3>
+      <label class="change-pwd-label">用户名
+        <input type="text" id="pwdUsername" readonly class="change-pwd-input">
+      </label>
+      <label class="change-pwd-label">原密码
+        <input type="password" id="oldPassword" required class="change-pwd-input">
+      </label>
+      <label class="change-pwd-label">新密码
+        <input type="password" id="newPassword" required class="change-pwd-input">
+      </label>
+      <label class="change-pwd-label">确认新密码
+        <input type="password" id="confirmPassword" required class="change-pwd-input">
+      </label>
+      <div id="pwdMsg" class="change-pwd-msg"></div>
+      <div style="display:flex;gap:16px;margin-top:8px;">
+        <button type="submit" class="change-pwd-btn">确认</button>
+        <button type="button" class="change-pwd-btn cancel" onclick="document.getElementById('changePwdDialog').close()">取消</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+ 
+<script>
+// 创建高科技粒子背景 
+function createTechParticles() {
+  const particlesContainer = document.getElementById('particles'); 
+  const particleCount = Math.floor(window.innerWidth  / 5);
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div'); 
+    particle.classList.add('tech-particle'); 
+    
+    // 随机大小 (1px - 4px)
+    const size = Math.random()  * 3 + 1;
+    particle.style.width  = `${size}px`;
+    particle.style.height  = `${size}px`;
+    
+    // 随机位置
+    particle.style.left  = `${Math.random()  * 100}%`;
+    particle.style.top  = `${Math.random()  * 100 + 100}%`;
+    
+    // 随机动画延迟和持续时间 
+    const delay = Math.random()  * 10;
+    const duration = Math.random()  * 20 + 10;
+    particle.style.animationDelay  = `${delay}s`;
+    particle.style.animationDuration  = `${duration}s`;
+    
+    // 随机透明度
+    particle.style.opacity  = Math.random()  * 0.5 + 0.5;
+    
+    particlesContainer.appendChild(particle); 
+  }
+}
+ 
+// 创建连接线效果 
+function createConnections() {
+  const connectionsContainer = document.getElementById('connections'); 
+  const connectionCount = Math.floor(window.innerWidth  / 50);
+  
+  for (let i = 0; i < connectionCount; i++) {
+    const line = document.createElement('div'); 
+    line.classList.add('connection-line'); 
+    
+    // 随机位置和长度 
+    const top = Math.random()  * 100;
+    const left = Math.random()  * 100;
+    const length = Math.random()  * 200 + 50;
+    const angle = Math.random()  * 360;
+    
+    line.style.top  = `${top}%`;
+    line.style.left  = `${left}%`;
+    line.style.width  = `${length}px`;
+    line.style.transform  = `rotate(${angle}deg)`;
+    
+    // 随机动画延迟
+    line.style.animationDelay  = `${Math.random()  * 2}s`;
+    
+    connectionsContainer.appendChild(line); 
+  }
+}
+ 
+// 波纹效果 
+function createRipple(event) {
+  const card = event.currentTarget; 
+  const rect = card.getBoundingClientRect(); 
+  
+  const ripple = document.createElement('span'); 
+  ripple.classList.add('ripple-effect'); 
+  
+  // 设置波纹位置
+  const x = event.clientX  - rect.left; 
+  const y = event.clientY  - rect.top; 
+  ripple.style.left  = `${x}px`;
+  ripple.style.top  = `${y}px`;
+  
+  card.appendChild(ripple); 
+  
+  // 动画结束后移除元素 
+  ripple.addEventListener('animationend',  () => {
+    ripple.remove(); 
+  });
+}
+ 
+// 导航功能 
+function navigateToCamera() {
+  window.location.href = 'camera.html';
+}
+ 
+function showAbout() {
+  const aboutContent = `
+    <div style="max-width: 400px; text-align: center;">
+      <h2 style="color: var(--primary-color); margin-bottom: 16px;">河流污染监测系统</h2>
+      <p style="margin-bottom: 8px;"><strong>版本：2.0</strong></p>
+      <p style="margin-bottom: 16px; line-height: 1.6;">
+        基于人工智能图像分析技术，实时监测水体污染状况，为环境保护提供数据支持。
+      </p>
+      <button onclick="this.parentElement.parentElement.close()"  style=" 
+        background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+        color:rgba(255,255,255,0.9);
+        border: none;
+        padding: 8px 24px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 16px;
+        box-shadow: 0 0 10px rgba(0, 198, 255, 0.3);
+      ">确定</button>
+    </div>
+  `;
+  
+  const dialog = document.createElement('dialog'); 
+  dialog.style.cssText = `
+    border: none;
+    border-radius: 12px;
+    padding: 24px;
+    background: var(--card-bg);
+    box-shadow: 0 8px 32px rgba(0, 114, 255, 0.2);
+    border: 1px solid rgba(0, 198, 255, 0.2);
+    backdrop-filter: blur(5px);
+    max-width: 90%;
+    width: 400px;
+  `;
+  dialog.innerHTML = aboutContent;
+  
+  document.body.appendChild(dialog);
+  
+  // 使用 requestAnimationFrame 确保过渡动画生效
+  requestAnimationFrame(() => {
+    dialog.showModal();
+  });
+  
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) {
+      dialog.close();
+    }
+  });
+}
+ 
+// 创建水波纹效果
+function createWaterRipples() {
+    const ripplesContainer = document.getElementById('water-ripples');
+    const rippleCount = 5;
+    
+    for (let i = 0; i < rippleCount; i++) {
+        const ripple = document.createElement('div');
+        ripple.classList.add('water-ripple');
+        
+        // 随机位置
+        ripple.style.left = `${Math.random() * 100}%`;
+        ripple.style.top = `${Math.random() * 100}%`;
+        
+        // 随机大小
+        const size = Math.random() * 100 + 50;
+        ripple.style.width = `${size}px`;
+        ripple.style.height = `${size}px`;
+        
+        // 随机动画延迟
+        ripple.style.animationDelay = `${Math.random() * 4}s`;
+        
+        ripplesContainer.appendChild(ripple);
+    }
+}
+
+// 创建流动粒子
+function createFlowingParticles() {
+    const container = document.getElementById('flowing-particles');
+    const particleCount = Math.floor(window.innerWidth / 20);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('flowing-particle');
+        
+        // 随机位置
+        particle.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        particle.style.animationDelay = `${Math.random() * 8}s`;
+        
+        // 随机大小
+        const size = Math.random() * 2 + 1;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        container.appendChild(particle);
+    }
+}
+
+// 创建污染粒子
+function createPollutionParticles() {
+    const container = document.getElementById('pollution-particles');
+    const particleCount = Math.floor(window.innerWidth / 30);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('pollution-particle');
+        
+        // 随机位置
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        particle.style.animationDelay = `${Math.random() * 6}s`;
+        
+        // 随机大小
+        const size = Math.random() * 3 + 2;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        container.appendChild(particle);
+    }
+}
+
+// 创建科技圆环
+function createTechCircles() {
+    const container = document.getElementById('tech-circles');
+    const circleCount = 3;
+    
+    for (let i = 0; i < circleCount; i++) {
+        const circle = document.createElement('div');
+        circle.classList.add('tech-circle');
+        
+        // 随机大小
+        const size = Math.random() * 200 + 100;
+        circle.style.width = `${size}px`;
+        circle.style.height = `${size}px`;
+        
+        // 随机位置
+        circle.style.left = `${Math.random() * 100}%`;
+        circle.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟和方向
+        circle.style.animationDelay = `${Math.random() * 5}s`;
+        circle.style.animationDirection = Math.random() > 0.5 ? 'reverse' : 'normal';
+        
+        container.appendChild(circle);
+    }
+}
+
+// 创建数据流
+function createDataStreams() {
+    const container = document.getElementById('data-streams');
+    const streamCount = Math.floor(window.innerWidth / 100);
+    
+    for (let i = 0; i < streamCount; i++) {
+        const stream = document.createElement('div');
+        stream.classList.add('data-stream');
+        
+        // 生成随机数据
+        const data = Array(20).fill(0).map(() => 
+            Math.random().toString(16).substr(2, 2)
+        ).join(' ');
+        stream.textContent = data;
+        
+        // 随机位置
+        stream.style.left = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        stream.style.animationDelay = `${Math.random() * 8}s`;
+        
+        container.appendChild(stream);
+    }
+}
+
+// 创建扫描线
+function createScanLines() {
+    const container = document.getElementById('scan-lines');
+    const lineCount = 1;
+    
+    for (let i = 0; i < lineCount; i++) {
+        const line = document.createElement('div');
+        line.classList.add('scan-line');
+        
+        // 随机动画延迟
+        line.style.animationDelay = `${Math.random() * 4}s`;
+        
+        container.appendChild(line);
+    }
+}
+
+// 创建科技节点
+function createTechNodes() {
+    const container = document.getElementById('tech-nodes');
+    const nodeCount = Math.floor(window.innerWidth / 50);
+    
+    for (let i = 0; i < nodeCount; i++) {
+        const node = document.createElement('div');
+        node.classList.add('tech-node');
+        
+        // 随机位置
+        node.style.left = `${Math.random() * 100}%`;
+        node.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        node.style.animationDelay = `${Math.random() * 2}s`;
+        
+        container.appendChild(node);
+    }
+}
+
+// 创建科技光球
+function createTechOrbs() {
+    const container = document.getElementById('tech-orbs');
+    const orbCount = Math.floor(window.innerWidth / 200);
+    
+    for (let i = 0; i < orbCount; i++) {
+        const orb = document.createElement('div');
+        orb.classList.add('tech-orb');
+        
+        // 随机大小
+        const size = Math.random() * 60 + 40;
+        orb.style.width = `${size}px`;
+        orb.style.height = `${size}px`;
+        
+        // 随机位置
+        orb.style.left = `${Math.random() * 100}%`;
+        orb.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        orb.style.animationDelay = `${Math.random() * 6}s`;
+        
+        container.appendChild(orb);
+    }
+}
+
+// 创建数据环
+function createDataRings() {
+    const container = document.getElementById('data-rings');
+    const ringCount = 2;
+    
+    for (let i = 0; i < ringCount; i++) {
+        const ring = document.createElement('div');
+        ring.classList.add('data-ring');
+        
+        // 随机大小
+        const size = Math.random() * 300 + 200;
+        ring.style.width = `${size}px`;
+        ring.style.height = `${size}px`;
+        
+        // 随机位置
+        ring.style.left = `${Math.random() * 100}%`;
+        ring.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        ring.style.animationDelay = `${Math.random() * 10}s`;
+        
+        container.appendChild(ring);
+    }
+}
+
+// 创建科技光束
+function createTechBeams() {
+    const container = document.getElementById('tech-beams');
+    const beamCount = 3;
+    
+    for (let i = 0; i < beamCount; i++) {
+        const beam = document.createElement('div');
+        beam.classList.add('tech-beam');
+        
+        // 随机位置
+        beam.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        beam.style.animationDelay = `${Math.random() * 3}s`;
+        
+        container.appendChild(beam);
+    }
+}
+
+// 创建科技涟漪
+function createTechRipples() {
+    const container = document.getElementById('tech-ripples');
+    const rippleCount = 3;
+    
+    for (let i = 0; i < rippleCount; i++) {
+        const ripple = document.createElement('div');
+        ripple.classList.add('tech-ripple');
+        
+        // 随机大小
+        const size = Math.random() * 200 + 100;
+        ripple.style.width = `${size}px`;
+        ripple.style.height = `${size}px`;
+        
+        // 随机位置
+        ripple.style.left = `${Math.random() * 100}%`;
+        ripple.style.top = `${Math.random() * 100}%`;
+        
+        // 随机动画延迟
+        ripple.style.animationDelay = `${Math.random() * 4}s`;
+        
+        container.appendChild(ripple);
+    }
+}
+
+// 创建科技连接
+function createTechConnections() {
+    const container = document.getElementById('tech-connections');
+    const connectionCount = Math.floor(window.innerWidth / 100);
+    
+    for (let i = 0; i < connectionCount; i++) {
+        const connection = document.createElement('div');
+        connection.classList.add('tech-connection');
+        
+        // 随机位置和长度
+        const top = Math.random() * 100;
+        const left = Math.random() * 100;
+        const length = Math.random() * 200 + 100;
+        const angle = Math.random() * 360;
+        
+        connection.style.top = `${top}%`;
+        connection.style.left = `${left}%`;
+        connection.style.width = `${length}px`;
+        connection.style.transform = `rotate(${angle}deg)`;
+        
+        // 随机动画延迟
+        connection.style.animationDelay = `${Math.random() * 3}s`;
+        
+        container.appendChild(connection);
+    }
+}
+
+// 初始化 
+document.addEventListener('DOMContentLoaded',  () => {
+  createTechParticles();
+  createConnections();
+  createWaterRipples();
+  createFlowingParticles();
+  createPollutionParticles();
+  createTechCircles();
+  createDataStreams();
+  createTechNodes();
+  createTechOrbs();
+  createDataRings();
+  createTechBeams();
+  createTechRipples();
+  createTechConnections();
+  
+  // 添加点击事件
+  document.getElementById('cameraCard').addEventListener('click',  (e) => {
+    createRipple(e);
+    setTimeout(() => { window.location.href = 'camera.html'; }, 300);
+  });
+  
+  // 视口适配 
+  function adjustLayout() {
+    const vh = window.innerHeight  * 0.01;
+    document.documentElement.style.setProperty('--vh',  `${vh}px`);
+  }
+  
+  window.addEventListener('resize',  adjustLayout);
+  adjustLayout();
+});
+ 
+// 更好的错误处理 
+window.addEventListener('error',  (e) => {
+  console.error(' 发生错误:', e.message,  e.filename,  e.lineno); 
+});
+
+// 用户信息区
+const userInfo = document.getElementById('userInfo');
+const userAvatar = document.getElementById('userAvatar');
+const dropdownUsername = document.getElementById('dropdownUsername');
+const defaultAvatar = 'static/河流景观图片.png';
+if (userAvatar) {
+  userAvatar.onerror = () => {
+    userAvatar.onerror = null;
+    userAvatar.src = defaultAvatar;
+  };
+  // 初始默认
+  userAvatar.src = defaultAvatar;
+}
+
+async function initUserInfo() {
+  try {
+    const res = await fetch('/api/user_achievements');
+    if (!res.ok) {
+      if (userAvatar) userAvatar.src = defaultAvatar;
+      return;
+    }
+    const data = await res.json();
+    const avatarUrl = data.avatar ? `/static/avatars/${data.avatar}` : defaultAvatar;
+    userAvatar.src = avatarUrl;
+    dropdownUsername.textContent = data.username || '用户';
+  } catch (err) {
+    console.warn('获取用户信息失败', err);
+    if (userAvatar) userAvatar.src = defaultAvatar;
+  }
+}
+
+if (userInfo) {
+  userInfo.addEventListener('click', (e) => {
+    userInfo.classList.toggle('active');
+    e.stopPropagation();
+  });
+  document.addEventListener('click', () => {
+    userInfo.classList.remove('active');
+    if (personalMenu) personalMenu.style.display = 'none';
+  });
+}
+
+const uploadAvatarBtn = document.getElementById('uploadAvatarBtn');
+const avatarInput = document.getElementById('avatarInput');
+const personalMenuToggle = document.getElementById('personalMenuToggle');
+const personalMenu = document.getElementById('personalMenu');
+const achievementLink = document.getElementById('achievementLink');
+const communityLink = document.getElementById('communityLink');
+if (uploadAvatarBtn && avatarInput) {
+  uploadAvatarBtn.onclick = (e) => {
+    e.stopPropagation();
+    avatarInput.click();
+  };
+  avatarInput.onchange = () => {
+    const file = avatarInput.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('avatar', file);
+    fetch('/api/upload_avatar', { method: 'POST', body: formData })
+      .then(res => res.json())
+      .then(data => {
+        if (data.avatar) {
+          userAvatar.src = `/static/avatars/${data.avatar}?t=${Date.now()}`;
+        } else if (data.error) {
+          alert(data.error);
+          userAvatar.src = defaultAvatar;
+        } else {
+          userAvatar.src = defaultAvatar;
+        }
+      });
+  };
+}
+
+const historyBtn = document.getElementById('historyBtn');
+if (historyBtn) {
+  historyBtn.onclick = (e) => {
+    e.stopPropagation();
+    window.location.href = 'history.html';
+  };
+}
+
+const feedbackStatusBtn = document.getElementById('feedbackStatusBtn');
+if (feedbackStatusBtn) {
+  feedbackStatusBtn.onclick = (e) => {
+    e.stopPropagation();
+    window.location.href = 'feedback_status.html';
+  };
+}
+
+if (achievementLink) {
+  achievementLink.onclick = (e) => {
+    e.stopPropagation();
+    window.location.href = 'achievements.html';
+  };
+}
+
+if (communityLink) {
+  communityLink.onclick = (e) => {
+    e.stopPropagation();
+    window.location.href = 'community.html';
+  };
+}
+
+if (personalMenuToggle && personalMenu) {
+  personalMenuToggle.onclick = (e) => {
+    e.stopPropagation();
+    personalMenu.style.display = personalMenu.style.display === 'block' ? 'none' : 'block';
+  };
+}
+
+const changePwdBtn = document.getElementById('changePwdBtn');
+if (changePwdBtn) {
+  changePwdBtn.onclick = (e) => {
+    e.stopPropagation();
+    fetch('/api/user').then(res => res.json()).then(data => {
+      document.getElementById('pwdUsername').value = data.username;
+      document.getElementById('oldPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+      document.getElementById('pwdMsg').textContent = '';
+      document.getElementById('changePwdDialog').showModal();
+    });
+  };
+}
+
+// 密码验证函数（与注册页面相同）
+function validatePassword(password) {
+  if (password.length < 6) {
+    return '密码长度不能少于6位';
+  }
+  if (!/[a-zA-Z]/.test(password)) {
+    return '密码必须包含至少一个字母';
+  }
+  if (!/\d/.test(password)) {
+    return '密码必须包含至少一个数字';
+  }
+  if (/^(.)\1+$/.test(password)) {
+    return '密码不能太简单，不能全是相同字符';
+  }
+  if (/012|123|234|345|456|567|678|789|987|876|765|654|543|432|321|210/.test(password)) {
+    return '密码不能包含连续数字';
+  }
+  return '';
+}
+
+const changePwdForm = document.getElementById('changePwdForm');
+if (changePwdForm) {
+  changePwdForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const msg = document.getElementById('pwdMsg');
+    msg.className = 'change-pwd-msg';
+    
+    if (newPassword !== confirmPassword) {
+      msg.textContent = '两次新密码不一致';
+      msg.classList.add('error');
+      return;
+    }
+    
+    // 验证新密码
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      msg.textContent = passwordError;
+      msg.classList.add('error');
+      return;
+    }
+    
+    const res = await fetch('/api/change_password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.textContent = '修改成功，正在跳转...';
+      msg.classList.add('success');
+      setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+    } else {
+      msg.textContent = data.error || '修改失败';
+    }
+  };
+}
+
+// 注销账号三步骤确认动画
+let deleteConfirmStep = 0;
+let deletePopup = null;
+let deletePopupContent = null;
+
+function createDeletePopup(x, y) {
+  if (deletePopup) {
+    deletePopup.remove();
+  }
+  deleteConfirmStep = 0;
+  
+  deletePopup = document.createElement('div');
+  deletePopup.id = 'deleteAccountPopup';
+  deletePopup.style.cssText = `
+    position: fixed;
+    left: ${x}px;
+    top: ${y}px;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(10,25,47,0.98), rgba(10,25,47,0.95));
+    border: 2px solid rgba(255,68,68,0.5);
+    border-radius: 16px;
+    padding: 24px 32px;
+    min-width: 320px;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(255,68,68,0.3);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    transition: all 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  `;
+  
+  deletePopupContent = document.createElement('div');
+  deletePopupContent.innerHTML = `
+    <h3 style="color:#ff4444;margin:0 0 16px 0;font-size:1.3em;text-align:center;">⚠️ 会失去所有数据哦</h3>
+    <p style="color:var(--text-secondary);margin:0 0 20px 0;text-align:center;line-height:1.6;">谨慎操作</p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button id="deleteCancelBtn" style="background:rgba(0,198,255,0.1);border:1px solid rgba(0,198,255,0.3);color:#00c6ff;padding:10px 20px;border-radius:8px;cursor:pointer;transition:all 0.3s;">取消</button>
+      <button id="deleteConfirmBtn" style="background:rgba(255,68,68,0.2);border:1px solid rgba(255,68,68,0.4);color:#ff6666;padding:10px 20px;border-radius:8px;cursor:pointer;transition:all 0.3s;font-weight:600;">确认</button>
+    </div>
+  `;
+  deletePopup.appendChild(deletePopupContent);
+  document.body.appendChild(deletePopup);
+  
+  // 移动到中间（缓慢流畅的动画，2.5秒）
+  requestAnimationFrame(() => {
+    deletePopup.style.transition = 'all 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    deletePopup.style.left = '50%';
+    deletePopup.style.top = '50%';
+  });
+  
+  document.getElementById('deleteCancelBtn').onclick = () => {
+    deletePopup.remove();
+    deletePopup = null;
+    deleteConfirmStep = 0;
+  };
+  
+  document.getElementById('deleteConfirmBtn').onclick = () => {
+    deleteConfirmStep = 1;
+    moveDeletePopupToCorner('left');
+  };
+}
+
+function moveDeletePopupToCorner(position) {
+  if (!deletePopup) return;
+  
+  // 调整位置，不要太靠边（左上：距离左边和顶部各200px，右上：距离右边200px，顶部200px）
+  const targetX = position === 'left' ? 200 : window.innerWidth - 200;
+  const targetY = 200;
+  
+  // 缓慢流畅的动画（2.5秒，先加速再减速）
+  deletePopup.style.transition = 'all 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+  deletePopup.style.left = `${targetX}px`;
+  deletePopup.style.top = `${targetY}px`;
+  deletePopup.style.transform = 'translate(-50%, -50%)';
+  
+  setTimeout(() => {
+    if (deleteConfirmStep === 1) {
+      deletePopupContent.innerHTML = `
+        <h3 style="color:#ff4444;margin:0 0 16px 0;font-size:1.3em;text-align:center;">⚠️ 数据不可恢复，确认吗</h3>
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button id="deleteCancelBtn2" style="background:rgba(0,198,255,0.1);border:1px solid rgba(0,198,255,0.3);color:#00c6ff;padding:10px 20px;border-radius:8px;cursor:pointer;">取消</button>
+          <button id="deleteConfirmBtn2" style="background:rgba(255,68,68,0.2);border:1px solid rgba(255,68,68,0.4);color:#ff6666;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;">确认</button>
+        </div>
+      `;
+      document.getElementById('deleteCancelBtn2').onclick = () => {
+        deletePopup.remove();
+        deletePopup = null;
+        deleteConfirmStep = 0;
+      };
+      document.getElementById('deleteConfirmBtn2').onclick = () => {
+        deleteConfirmStep = 2;
+        moveDeletePopupToCorner('right');
+      };
+    } else if (deleteConfirmStep === 2) {
+      deletePopupContent.innerHTML = `
+        <h3 style="color:#ff4444;margin:0 0 16px 0;font-size:1.3em;text-align:center;">⚠️ 数据不可恢复，确认吗</h3>
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button id="deleteCancelBtn3" style="background:rgba(0,198,255,0.1);border:1px solid rgba(0,198,255,0.3);color:#00c6ff;padding:10px 20px;border-radius:8px;cursor:pointer;">取消</button>
+          <button id="deleteConfirmBtn3" style="background:rgba(255,68,68,0.2);border:1px solid rgba(255,68,68,0.4);color:#ff6666;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;">确认</button>
+        </div>
+      `;
+      document.getElementById('deleteCancelBtn3').onclick = () => {
+        deletePopup.remove();
+        deletePopup = null;
+        deleteConfirmStep = 0;
+      };
+      document.getElementById('deleteConfirmBtn3').onclick = () => {
+        deleteConfirmStep = 3;
+        moveDeletePopupToCenter();
+      };
+    }
+  }, 2500);
+}
+
+function moveDeletePopupToCenter() {
+  if (!deletePopup) return;
+  
+  // 缓慢流畅的动画（2.5秒，先加速再减速）
+  deletePopup.style.transition = 'all 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+  deletePopup.style.left = '50%';
+  deletePopup.style.top = '50%';
+  
+  setTimeout(() => {
+    deletePopupContent.innerHTML = `
+      <h3 style="color:#00ff88;margin:0 0 16px 0;font-size:1.3em;text-align:center;">✨ 感谢你的使用，欢迎下次使用</h3>
+      <div style="text-align:center;color:var(--text-secondary);">正在注销账号...</div>
+    `;
+    
+    setTimeout(() => {
+      // 删除所有数据并注销账号
+      fetch('/api/delete_account', { method: 'POST' })
+        .then(res => res.json().then(d => ({ ok: res.ok, data: d })))
+        .then(({ ok, data }) => {
+          if (ok) {
+            window.location.href = 'login.html';
+          } else {
+            alert(data.error || '注销失败');
+            if (deletePopup) {
+              deletePopup.remove();
+            }
+            deletePopup = null;
+            deleteConfirmStep = 0;
+          }
+        })
+        .catch(() => {
+          alert('网络异常，请稍后重试');
+          if (deletePopup) {
+            deletePopup.remove();
+    }
+          deletePopup = null;
+          deleteConfirmStep = 0;
+        });
+    }, 1000);
+  }, 2500);
+}
+
+const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+if (deleteAccountBtn) {
+  deleteAccountBtn.onclick = (e) => {
+    e.stopPropagation();
+    const rect = deleteAccountBtn.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    createDeletePopup(x, y);
+  };
+}
+
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.onclick = () => {
+    fetch('/api/logout').then(() => window.location.href = 'login.html');
+  };
+}
+
+initUserInfo();
+
+// 首页进入时：若被警告过则弹窗活跃度提示
+window.addEventListener('DOMContentLoaded', () => {
+  (async function checkInactivityWarning() {
+    try {
+      const res = await fetch('/api/user/status', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.show_inactivity_warning) return;
+      const d = document.getElementById('inactivityWarningDialog');
+      if (d) d.showModal();
+    } catch (e) {}
+  })();
+});
+
+// 弹窗按钮 hover 动效更丝滑 + 关闭动画更慢更丝滑
+window.addEventListener('DOMContentLoaded', () => {
+  const d = document.getElementById('inactivityWarningDialog');
+  const btn = document.querySelector('#inactivityWarningDialog button[data-role=\"close\"]');
+  if (!d || !btn) return;
+
+  btn.addEventListener('mouseenter', () => {
+    btn.style.transform = 'translateY(-1px)';
+    btn.style.boxShadow = '0 14px 30px rgba(0,198,255,0.24)';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = 'translateY(0)';
+    btn.style.boxShadow = '0 10px 24px rgba(0,198,255,0.18)';
+  });
+
+  const smoothClose = () => {
+    if (!d.open) return;
+    d.setAttribute('data-closing', '1');
+    // 缓慢一点的关闭动画
+    setTimeout(() => {
+      try { d.close(); } catch (e) {}
+      d.removeAttribute('data-closing');
+    }, 650);
+  };
+  btn.addEventListener('click', smoothClose);
+  d.addEventListener('cancel', (e) => {
+    // ESC 也走丝滑关闭
+    e.preventDefault();
+    smoothClose();
+  });
+});
+</script>
+
+<!-- 活跃度提示弹窗（被警告用户进入首页时显示） -->
+<dialog id="inactivityWarningDialog" style="max-width:520px; padding:0; border-radius:18px; border:1px solid rgba(0,198,255,0.28); background: linear-gradient(135deg, rgba(10, 25, 47, 0.92), rgba(2, 12, 27, 0.92)); color: var(--text-primary); overflow:hidden; box-shadow: 0 18px 60px rgba(0,114,255,0.18); transition: opacity .65s ease, transform .65s ease;">
+  <div style="padding:24px 24px 10px 24px;">
+    <h2 style="color:#ffc107; margin:0 0 12px 0; font-size:1.28em; letter-spacing:0.5px;">⚠️ 活跃度提示</h2>
+    <p style="line-height:1.8; margin:0 0 10px 0; color: rgba(255,255,255,0.92);">检测到您的账号有一段时间未活跃了。</p>
+    <p style="line-height:1.8; margin:0 0 10px 0; color: rgba(255,255,255,0.88);">为保障账户正常使用，请尽快登录系统并完成至少一次操作（例如：查看一次检测数据或提交一条反馈记录）。</p>
+    <p style="line-height:1.8; margin:0 0 6px 0; color: rgba(255,255,255,0.88);">如长期无操作，账号可能会被系统自动限时封禁。</p>
+    <p style="line-height:1.8; margin:0 0 0 0; color: rgba(255,255,255,0.88);">请及时保持活跃。</p>
+  </div>
+  <div style="display:flex; justify-content:center; padding:16px 24px 22px 24px; border-top:1px solid rgba(0,198,255,0.14); background: rgba(0, 198, 255, 0.04);">
+    <div style="margin:0; display:flex; justify-content:center; width:100%;">
+      <button type="button" data-role="close" style="padding: 10px 28px; background: linear-gradient(45deg, var(--primary-color), var(--accent-color)); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-size: 1em; box-shadow: 0 10px 24px rgba(0,198,255,0.18); transition: transform 0.18s ease, box-shadow 0.18s ease;">我知道了</button>
+    </div>
+  </div>
+</dialog>
+<script>
+  // 关闭时的渐隐（保持 open 状态一段时间再 close）
+  (function() {
+    const d = document.getElementById('inactivityWarningDialog');
+    if (!d) return;
+    const apply = () => {
+      if (d.getAttribute('data-closing') === '1') {
+        d.style.opacity = '0';
+        d.style.transform = 'translateY(6px) scale(0.98)';
+      } else {
+        d.style.opacity = '';
+        d.style.transform = '';
+      }
+    };
+    const mo = new MutationObserver(apply);
+    mo.observe(d, { attributes: true, attributeFilter: ['data-closing', 'open'] });
+  })();
+</script>
+</body>
+</html>

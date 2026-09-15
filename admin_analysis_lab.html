@@ -1,0 +1,575 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析结果实验室 - 河流污染监测系统</title>
+    <style>
+        :root {
+            --primary-color: #00c6ff;
+            --secondary-color: #0072ff;
+            --accent-color: #00ffcc;
+            --bg-dark: #0a192f;
+            --bg-darker: #020c1b;
+            --card-bg: rgba(10, 25, 47, 0.8);
+            --text-primary: #e6f1ff;
+            --text-secondary: #ccd6f6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .background {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .tech-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(0, 198, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 114, 255, 0.15) 0%, transparent 40%),
+                linear-gradient(to bottom, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            filter: blur(20px);
+            opacity: 0.8;
+            animation: bgPulse 10s ease-in-out infinite;
+        }
+        .grid-lines {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 198, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 198, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+        }
+        .bubble-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .bubble {
+            position: absolute;
+            bottom: -60px;
+            border-radius: 50%;
+            background: rgba(0, 198, 255, 0.15);
+            border: 1px solid rgba(0, 198, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.25);
+            animation: bubbleFloat linear infinite;
+            filter: blur(0.5px);
+        }
+        @keyframes bubbleFloat {
+            0% { transform: translateY(0) translateX(0) scale(0.8); opacity: 0; }
+            10% { opacity: 0.6; }
+            70% { opacity: 0.4; }
+            100% { transform: translateY(-120vh) translateX(40px) scale(1.2); opacity: 0; }
+        }
+        @keyframes bgPulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(40px); }
+        }
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .back-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: 1px solid rgba(0, 198, 255, 0.4);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover {
+            background: rgba(0, 198, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 198, 255, 0.2);
+        }
+        .title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 0;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 6px;
+        }
+        .panel {
+            background: linear-gradient(135deg, var(--card-bg), rgba(0, 114, 255, 0.2));
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 114, 255, 0.12);
+            backdrop-filter: blur(8px);
+            margin-bottom: 18px;
+        }
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        label { color: var(--text-secondary); font-size: 0.9rem; }
+        input, select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 198, 255, 0.25);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.3);
+        }
+        .actions {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            cursor: pointer;
+            color: var(--text-primary);
+            background: rgba(0, 198, 255, 0.12);
+            border: 1px solid rgba(0, 198, 255, 0.25);
+            transition: all 0.3s ease;
+        }
+        .btn:hover { transform: translateY(-2px); background: rgba(0, 198, 255, 0.2); }
+        .btn.danger { background: rgba(255,68,68,0.1); border-color: rgba(255,68,68,0.4); color: #ff8888; }
+        .btn.danger:hover { background: rgba(255,68,68,0.2); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        thead {
+            background: rgba(0, 198, 255, 0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 198, 255, 0.08);
+            color: var(--text-secondary);
+        }
+        .result-cell {
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-width: 520px;
+        }
+        tbody tr:hover td {
+            background: rgba(0, 198, 255, 0.05);
+            color: var(--text-primary);
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        .table-panel .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .stat-card h4 {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-top: 6px;
+        }
+        .sub-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 4px;
+            white-space: pre-wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: rgba(0, 198, 255, 0.15);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            margin-right: 6px;
+        }
+    </style>
+
+<script src="static/mock-api.js"></script>
+</head>
+<body>
+    <div class="background">
+        <div class="tech-bg"></div>
+        <div class="grid-lines"></div>
+        <div class="bubble-layer" id="bubbleLayer"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="window.location.href='admin.html'">← 返回管理面板</button>
+            <h1 class="title">分析结果实验室</h1>
+            <div class="subtitle">查询、筛选并管理所有用户的分析结果</div>
+        </div>
+
+        <div class="panel">
+            <div class="filters">
+                <div class="field">
+                    <label>用户名</label>
+                    <input type="text" id="f_username" placeholder="模糊匹配用户名">
+                </div>
+                <div class="field">
+                    <label>内容关键词</label>
+                    <input type="text" id="f_keyword" placeholder="分析内容关键词">
+                </div>
+                <div class="field">
+                    <label>开始时间</label>
+                    <input type="datetime-local" id="f_start">
+                </div>
+                <div class="field">
+                    <label>结束时间</label>
+                    <input type="datetime-local" id="f_end">
+                </div>
+                <div class="field">
+                    <label>排序字段</label>
+                    <select id="sortBy">
+                        <option value="analysis_time">分析时间</option>
+                        <option value="username">用户名</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>排序方式</label>
+                    <select id="sortOrder">
+                        <option value="desc">降序</option>
+                        <option value="asc">升序</option>
+                    </select>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn" id="btnSearch">查询</button>
+                <button class="btn" id="btnExport">导出CSV</button>
+                <button class="btn danger" id="btnDelete">批量删除</button>
+            </div>
+        </div>
+
+        <div class="panel table-panel">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="checkAll"></th>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>分析内容</th>
+                            <th>分析时间</th>
+                            <th>分析图片</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+            <div class="footer">
+                <div>共 <span id="total">0</span> 条记录</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn" id="prev">上一页</button>
+                    <span id="pageInfo"></span>
+                    <button class="btn" id="next">下一页</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div style="font-weight:600;color:var(--primary-color);margin-bottom:12px;">统计概览</div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        const state = { limit: 20, offset: 0, total: 0 };
+
+        function createBubbles() {
+            const container = document.getElementById('bubbleLayer');
+            const count = Math.min(40, Math.floor(window.innerWidth / 30));
+            for (let i = 0; i < count; i++) {
+                const bubble = document.createElement('span');
+                bubble.className = 'bubble';
+                const size = Math.random() * 40 + 10;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.animationDuration = `${Math.random() * 12 + 8}s`;
+                bubble.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(bubble);
+            }
+        }
+
+        function getFilters() {
+            return {
+                username: document.getElementById('f_username').value.trim(),
+                keyword: document.getElementById('f_keyword').value.trim(),
+                start_date: document.getElementById('f_start').value ? new Date(document.getElementById('f_start').value).toISOString() : '',
+                end_date: document.getElementById('f_end').value ? new Date(document.getElementById('f_end').value).toISOString() : '',
+                sortBy: document.getElementById('sortBy').value,
+                sortOrder: document.getElementById('sortOrder').value,
+                limit: state.limit,
+                offset: state.offset
+            };
+        }
+
+        function renderTable(items) {
+            const body = document.getElementById('resultBody');
+            body.innerHTML = items.map(item => `
+                <tr>
+                    <td><input type="checkbox" class="row-check" value="${item.id}"></td>
+                    <td>${item.id}</td>
+                    <td><span class="badge">${item.username}</span></td>
+                    <td class="result-cell">${escapeHtml(cleanText(item.result || '—'))}</td>
+                    <td>${new Date(item.analysis_time).toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    })}</td>
+                    ${item.image_path ? `<td><img src="static/analysis_images/${item.image_path}" alt="分析图片" style="max-width:200px;max-height:150px;object-fit:contain;border-radius:8px;border:1px solid rgba(0,198,255,0.2);"></td>` : '<td>—</td>'}
+                    <td><button class="btn danger" style="padding:6px 12px;font-size:0.9em;" onclick="deleteSingle(${item.id})">删除</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str ?? '';
+            return div.innerHTML;
+        }
+
+        function cleanText(value) {
+            const str = String(value ?? '');
+            const matched = str.match(/[\u4e00-\u9fa50-9，。！？、；：（）【】《》——…￥·\s]+/g);
+            if (!matched) return '';
+            let text = matched.join('');
+            // 逗号/顿号/分号 -> 空格，保留冒号
+            text = text.replace(/[，、；]+/g, ' ');
+            text = text.replace(/([。！？])+/g, '$1');
+            text = text.replace(/\s{2,}/g, ' ');
+            return text.trim();
+        }
+
+        async function queryResults() {
+            const res = await fetch('/api/admin/analysis_results/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(getFilters())
+            });
+            if (!res.ok) {
+                alert('查询失败');
+                return;
+            }
+            const data = await res.json();
+            state.total = data.total || 0;
+            document.getElementById('total').textContent = state.total;
+            const currentPage = Math.floor(state.offset / state.limit) + 1;
+            const totalPages = Math.max(1, Math.ceil(state.total / state.limit));
+            document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages} 页`;
+            renderTable(data.items || []);
+            document.getElementById('checkAll').checked = false;
+        }
+
+        async function refreshStats() {
+            const payload = getFilters();
+            payload.limit = undefined;
+            payload.offset = undefined;
+            const res = await fetch('/api/admin/analysis_results/stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const stats = document.getElementById('stats');
+            const daily = (data.daily_counts || []).map(item => `${item.date} (${item.count})`).join('、') || '—';
+            const topUsers = (data.top_users || []).map(item => `${item.username} (${item.count})`).join('、') || '—';
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <h4>总记录数</h4>
+                    <div class="stat-value">${data.total || 0}</div>
+                    <div class="sub-text">分析记录总计</div>
+                </div>
+                <div class="stat-card">
+                    <h4>活跃用户</h4>
+                    <div class="stat-value">${data.unique_users || 0}</div>
+                    <div class="sub-text">${topUsers}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>近7天趋势</h4>
+                    <div class="stat-value">${(data.daily_counts || []).reduce((sum, item) => sum + item.count, 0)}</div>
+                    <div class="sub-text">${daily}</div>
+                </div>
+            `;
+        }
+
+        async function exportCSV() {
+            const filters = getFilters();
+            filters.limit = 1000;
+            filters.offset = 0;
+            const res = await fetch('/api/admin/analysis_results/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            });
+            if (!res.ok) {
+                alert('导出失败');
+                return;
+            }
+            const data = await res.json();
+            const rows = [['ID', '用户名', '分析内容', '分析时间']];
+            (data.items || []).forEach(item => {
+                rows.push([
+                    item.id,
+                    item.username,
+                    (item.result || '').replace(/\n/g, ' '),
+                    new Date(item.analysis_time).toLocaleString()
+                ]);
+            });
+            const csv = rows.map(r => r.map(field => `"${field}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'analysis_results.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function deleteSelected() {
+            const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(c => Number(c.value));
+            if (!ids.length) {
+                alert('请先勾选记录');
+                return;
+            }
+            if (!confirm(`确认删除选中的 ${ids.length} 条分析记录？该操作不可恢复。`)) return;
+            const res = await fetch('/api/admin/analysis_results/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids })
+            });
+            if (!res.ok) {
+                alert('删除失败');
+                return;
+            }
+            await queryResults();
+            await refreshStats();
+        }
+
+        // 单条删除
+        async function deleteSingle(id) {
+            if (!confirm(`确认删除ID为 ${id} 的分析记录？该操作不可恢复。`)) return;
+            const res = await fetch('/api/admin/analysis_results/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] })
+            });
+            if (!res.ok) {
+                alert('删除失败');
+                return;
+            }
+            await queryResults();
+            await refreshStats();
+        }
+
+        document.getElementById('btnSearch').onclick = async () => {
+            state.offset = 0;
+            await queryResults();
+            await refreshStats();
+        };
+        document.getElementById('btnExport').onclick = exportCSV;
+        document.getElementById('btnDelete').onclick = deleteSelected;
+        document.getElementById('prev').onclick = async () => {
+            state.offset = Math.max(0, state.offset - state.limit);
+            await queryResults();
+        };
+        document.getElementById('next').onclick = async () => {
+            if (state.offset + state.limit < state.total) {
+                state.offset += state.limit;
+                await queryResults();
+            }
+        };
+        document.getElementById('checkAll').onchange = (e) => {
+            document.querySelectorAll('.row-check').forEach(c => c.checked = e.target.checked);
+        };
+
+        createBubbles();
+        (async () => {
+            await queryResults();
+            await refreshStats();
+        })();
+    </script>
+    <link rel="stylesheet" href="static/target-cursor.css">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="static/target-cursor.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        initTargetCursor({ targetSelector: 'a, button, .cursor-target', spinDuration: 2, hideDefaultCursor: true });
+      });
+    </script>
+</body>
+</html>
+

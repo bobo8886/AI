@@ -1,0 +1,474 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绑定邮箱</title>
+    <style>
+        :root {
+            --base-unit: min(1.6vh, 1.2vw);
+            --primary: #00c6ff;
+            --primary-dark: #0072ff;
+            --accent: #00ffcc;
+            --bg-dark: #0a192f;
+            --bg-darker: #020c1b;
+            --card-bg: rgba(10, 25, 47, 0.94);
+            --text-primary: #e6f1ff;
+            --text-secondary: #a8b2d1;
+            --border: rgba(0, 198, 255, 0.28);
+            --shadow: 0 12px 40px rgba(0, 114, 255, 0.15);
+            --radius: 12px;
+            --radius-lg: 18px;
+            --transition: all 0.25s ease;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-darker);
+            min-height: 100vh;
+            color: var(--text-primary);
+            font-size: calc(var(--base-unit) * 1.2);
+            line-height: 1.6;
+        }
+        .page-wrap {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse 85% 55% at 50% 0%, rgba(0, 198, 255, 0.14) 0%, transparent 50%),
+                        radial-gradient(ellipse 60% 45% at 85% 70%, rgba(0, 114, 255, 0.1) 0%, transparent 50%),
+                        linear-gradient(180deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+        }
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: linear-gradient(rgba(0, 198, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 198, 255, 0.05) 1px, transparent 1px);
+            background-size: 36px 36px;
+        }
+        .particles-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 198, 255, 0.85);
+            box-shadow: 0 0 20px rgba(0, 198, 255, 0.9), 0 0 40px rgba(0, 255, 204, 0.5);
+            animation: float-up linear infinite;
+        }
+        .particle.p2 {
+            background: rgba(0, 255, 204, 0.75);
+            box-shadow: 0 0 18px rgba(0, 255, 204, 0.85), 0 0 35px rgba(0, 198, 255, 0.4);
+        }
+        .particle.p3 {
+            background: rgba(0, 114, 255, 0.7);
+            box-shadow: 0 0 16px rgba(0, 114, 255, 0.8);
+        }
+        @keyframes float-up {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            6% { opacity: 0.95; }
+            94% { opacity: 0.7; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+        .main-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow), 0 0 60px rgba(0, 198, 255, 0.06);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(18px);
+            padding: 40px 36px;
+            position: relative;
+            z-index: 1;
+        }
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(0, 198, 255, 0.6), 0 0 40px rgba(0, 255, 204, 0.4);
+            animation: title-float 3s ease-in-out infinite;
+        }
+        @keyframes title-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .page-desc {
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .form-section {
+            margin-bottom: 20px;
+        }
+        .form-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.15);
+        }
+        .form-group input::placeholder { color: rgba(168, 178, 209, 0.5); }
+        .form-row { display: flex; gap: 12px; }
+        .form-row .form-group { flex: 1; }
+        .hint { font-size: 11px; color: var(--text-secondary); margin-top: 4px; opacity: 0.9; }
+        .btn-save {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 8px;
+        }
+        .btn-save:hover { opacity: 0.95; transform: translateY(-1px); }
+        .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .verify-block {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+        .verify-block.show { display: block; }
+        .verify-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+        .verify-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
+        .verify-row .form-group { flex: 1; margin-bottom: 0; }
+        .btn-send-code {
+            padding: 12px 18px;
+            background: rgba(0, 198, 255, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+        .btn-send-code:hover:not(:disabled) { background: rgba(0, 198, 255, 0.3); }
+        .btn-send-code:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-verify {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent), #00ccaa);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-darker);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: var(--transition);
+        }
+        .btn-verify:hover:not(:disabled) { opacity: 0.95; }
+        .msg {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .msg.success { background: rgba(0, 255, 136, 0.12); border: 1px solid rgba(0, 255, 136, 0.35); color: #00ff88; }
+        .msg.error { background: rgba(255, 68, 68, 0.12); border: 1px solid rgba(255, 68, 68, 0.35); color: #ff6b6b; }
+        .links {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+        }
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .links a:hover { text-decoration: underline; }
+        .links span { color: var(--text-secondary); }
+    </style>
+
+<script src="static/mock-api.js"></script>
+</head>
+<body>
+    <div class="page-wrap">
+        <div class="bg-layer"></div>
+        <div class="grid-bg"></div>
+        <div class="particles-bg" id="particlesBg"></div>
+        <div class="main-card">
+            <h1 class="page-title">绑定邮箱</h1>
+            <p class="page-desc">无需登录，输入用户名后填写邮箱及 SMTP 信息即可绑定，绑定后可于找回密码时使用该邮箱接收验证码。</p>
+            <form id="configForm">
+                <div class="form-section">
+                    <div class="form-section-title">账号</div>
+                    <div class="form-group">
+                        <label for="bindUsername">用户名</label>
+                        <input type="text" id="bindUsername" name="username" required placeholder="请输入您的用户名" autocomplete="username">
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">邮箱与 SMTP 配置</div>
+                    <div class="form-group">
+                        <label for="mailServer">邮件服务器</label>
+                        <input type="text" id="mailServer" name="mailServer" placeholder="如 smtp.qq.com" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mailPort">端口</label>
+                            <input type="number" id="mailPort" name="mailPort" placeholder="587" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mailUseTls">TLS</label>
+                            <select id="mailUseTls" name="mailUseTls">
+                                <option value="true">是</option>
+                                <option value="false">否</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mailUsername">发件邮箱 / 账号</label>
+                        <input type="text" id="mailUsername" name="mailUsername" placeholder="用于登录 SMTP 的邮箱或账号" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mailPassword">授权码 / 密码</label>
+                        <input type="password" id="mailPassword" name="mailPassword" placeholder="邮箱授权码或密码" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">要绑定的邮箱（接收验证码）</label>
+                        <input type="email" id="userEmail" name="userEmail" placeholder="接收验证码的邮箱地址" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-save" id="btnSave">保存配置</button>
+                <div id="configMsg" class="msg" style="display:none;"></div>
+            </form>
+            <div id="verifyBlock" class="verify-block">
+                <div class="verify-title">邮箱验证</div>
+                <form id="verifyForm">
+                    <div class="verify-row">
+                        <div class="form-group">
+                            <label for="verifyCode">验证码</label>
+                            <input type="text" id="verifyCode" name="verifyCode" placeholder="6 位验证码" maxlength="6" required>
+                        </div>
+                        <button type="button" id="btnSendCode" class="btn-send-code">发送验证码</button>
+                    </div>
+                    <button type="submit" class="btn-verify" id="btnVerify">验证并绑定</button>
+                    <div id="verifyMsg" class="msg" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="links">
+                <a href="login.html">返回登录</a>
+                <span>|</span>
+                <a href="forgot_password.html">找回密码</a>
+                <span>|</span>
+                <a href="register.html">注册</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function initParticles() {
+            const container = document.getElementById('particlesBg');
+            const count = Math.min(70, Math.floor(window.innerWidth / 12));
+            const classes = ['particle', 'particle p2', 'particle p3'];
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = classes[i % 3];
+                const size = Math.random() * 4 + 2;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+                p.style.animationDelay = Math.random() * 8 + 's';
+                container.appendChild(p);
+            }
+        })();
+
+        const configForm = document.getElementById('configForm');
+        const verifyForm = document.getElementById('verifyForm');
+        const verifyBlock = document.getElementById('verifyBlock');
+        const btnSave = document.getElementById('btnSave');
+        const btnSendCode = document.getElementById('btnSendCode');
+        let pendingEmail = '';
+
+        function getCreds() {
+            const username = (document.getElementById('bindUsername').value || '').trim();
+            return { username: username };
+        }
+
+        function showMsg(elId, text, type) {
+            const el = document.getElementById(elId);
+            el.textContent = text;
+            el.className = 'msg ' + type;
+            el.style.display = 'block';
+            setTimeout(function() { el.style.display = 'none'; }, 5000);
+        }
+
+        configForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fd = new FormData(configForm);
+            const creds = getCreds();
+            const payload = {
+                username: creds.username,
+                mailServer: (fd.get('mailServer') || '').trim(),
+                mailPort: fd.get('mailPort'),
+                mailUseTls: fd.get('mailUseTls'),
+                mailUsername: (fd.get('mailUsername') || '').trim(),
+                mailPassword: fd.get('mailPassword'),
+                userEmail: (fd.get('userEmail') || '').trim()
+            };
+            pendingEmail = payload.userEmail;
+            btnSave.disabled = true;
+            btnSave.textContent = '保存中…';
+            try {
+                const res = await fetch('/api/save_email_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMsg('configMsg', data.message || '配置已保存，请发送验证码完成验证', 'success');
+                    verifyBlock.classList.add('show');
+                } else {
+                    showMsg('configMsg', data.error || '保存失败', 'error');
+                }
+            } catch (err) {
+                showMsg('configMsg', '网络错误，请重试', 'error');
+            }
+            btnSave.disabled = false;
+            btnSave.textContent = '保存配置';
+        });
+
+        btnSendCode.addEventListener('click', async function() {
+            const email = pendingEmail || (document.getElementById('userEmail').value || '').trim();
+            if (!email) {
+                showMsg('verifyMsg', '请先保存配置并确认邮箱', 'error');
+                return;
+            }
+            const creds = getCreds();
+            const payload = { email: email, username: creds.username };
+            btnSendCode.disabled = true;
+            btnSendCode.textContent = '发送中…';
+            try {
+                const res = await fetch('/api/send_verification_code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMsg('verifyMsg', '验证码已发送，请查收邮件', 'success');
+                    var n = 60;
+                    var t = setInterval(function() {
+                        if (n <= 0) { clearInterval(t); btnSendCode.disabled = false; btnSendCode.textContent = '重新发送'; return; }
+                        btnSendCode.textContent = '重新发送(' + n + 's)';
+                        n--;
+                    }, 1000);
+                } else {
+                    showMsg('verifyMsg', data.error || '发送失败', 'error');
+                    btnSendCode.disabled = false;
+                    btnSendCode.textContent = '发送验证码';
+                }
+            } catch (err) {
+                showMsg('verifyMsg', '网络错误', 'error');
+                btnSendCode.disabled = false;
+                btnSendCode.textContent = '发送验证码';
+            }
+        });
+
+        verifyForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const code = (document.getElementById('verifyCode').value || '').trim();
+            const email = pendingEmail || (document.getElementById('userEmail').value || '').trim();
+            if (!code || code.length !== 6) {
+                showMsg('verifyMsg', '请输入 6 位验证码', 'error');
+                return;
+            }
+            const creds = getCreds();
+            const payload = { email: email, code: code, username: creds.username };
+            var btn = document.getElementById('btnVerify');
+            btn.disabled = true;
+            btn.textContent = '验证中…';
+            try {
+                const res = await fetch('/api/bind_email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMsg('verifyMsg', data.message || '绑定成功', 'success');
+                    setTimeout(function() { window.location.href = 'forgot_password.html'; }, 1200);
+                } else {
+                    showMsg('verifyMsg', data.error || '验证失败', 'error');
+                }
+            } catch (err) {
+                showMsg('verifyMsg', '网络错误', 'error');
+            }
+            btn.disabled = false;
+            btn.textContent = '验证并绑定';
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/get_user_info', { credentials: 'same-origin' })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(user) {
+                    if (user && user.username) {
+                        document.getElementById('bindUsername').value = user.username;
+                    }
+                });
+        });
+    </script>
+</body>
+</html>

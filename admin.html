@@ -1,0 +1,1262 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员控制面板</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --base-unit: min(1.6vh, 1.2vw);
+            --primary-color: #00c6ff;
+            --secondary-color: #0072ff;
+            --accent-color: #00ffcc;
+            --bg-dark: #0a192f;
+            --bg-darker: #020c1b;
+            --card-bg: rgba(10, 25, 47, 0.8);
+            --card-glass: rgba(100, 150, 255, 0.1);
+            --text-primary: #e6f1ff;
+            --text-secondary: #ccd6f6;
+            --card-shadow: 0 8px 32px rgba(0, 114, 255, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --glow: 0 0 10px rgba(0, 198, 255, 0.7);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: var(--bg-darker);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            font-size: calc(var(--base-unit) * 1.2);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            padding: 2rem;
+        }
+
+        .background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        /* 复制所有背景特效样式 */
+        .tech-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 198, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 114, 255, 0.15) 0%, transparent 40%),
+                linear-gradient(to bottom, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            filter: blur(20px);
+            opacity: 0.8;
+            will-change: transform;
+            animation: bgPulse 10s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        /* 添加所有动画和特效相关的样式 */
+        .grid-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 198, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 198, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+            will-change: transform;
+            z-index: 2;
+        }
+
+        /* 添加其他所有动画和特效样式 */
+        .tech-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 198, 255, 0.8);
+            box-shadow: var(--glow);
+            animation: tech-float linear infinite;
+            z-index: 3;
+        }
+
+        /* 添加所有其他动画关键帧 */
+        @keyframes bgPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(40px); }
+        }
+
+        @keyframes tech-float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(20px);
+                opacity: 0;
+            }
+        }
+
+        /* 美化表格样式 */
+        .table {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .table:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 114, 255, 0.2);
+        }
+
+        .table thead th {
+            background: rgba(0, 198, 255, 0.1);
+            color: var(--text-primary);
+            border-bottom: 2px solid rgba(0, 198, 255, 0.3);
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(0, 198, 255, 0.1);
+            padding: 1rem;
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover td {
+            background: rgba(0, 198, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        /* 美化图表容器 */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .chart-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 114, 255, 0.2);
+        }
+
+        /* 标题样式 */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 8px rgba(0, 198, 255, 0.3);
+        }
+
+        /* 优化用户菜单样式 */
+        .user-menu {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .user-menu-button {
+            background: linear-gradient(135deg, rgba(0, 198, 255, 0.1), rgba(0, 255, 204, 0.1));
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.1);
+        }
+
+        .user-menu-button:hover {
+            background: linear-gradient(135deg, rgba(0, 198, 255, 0.15), rgba(0, 255, 204, 0.15));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 198, 255, 0.2);
+            border-color: rgba(0, 198, 255, 0.3);
+        }
+
+        .user-menu-button i {
+            font-size: 1.2em;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .user-menu-button:hover i {
+            transform: scale(1.1);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: linear-gradient(135deg, rgba(10, 25, 47, 0.95), rgba(10, 25, 47, 0.98));
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 220px;
+            backdrop-filter: blur(10px);
+            transform-origin: top right;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 198, 255, 0.15);
+            visibility: hidden;
+        }
+
+        .user-dropdown.show {
+            transform: scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dropdown-btn {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1em;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropdown-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(0, 198, 255, 0.1),
+                rgba(0, 255, 204, 0.1)
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .dropdown-btn:hover {
+            background: rgba(0, 198, 255, 0.1);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .dropdown-btn:hover::before {
+            opacity: 1;
+        }
+
+        .dropdown-btn i {
+            font-size: 1.1em;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-btn:hover i {
+            transform: scale(1.1);
+        }
+
+        .dropdown-btn.logout {
+            color: #ff4444;
+            margin-top: 4px;
+            border-top: 1px solid rgba(255, 68, 68, 0.1);
+        }
+
+        .dropdown-btn.logout:hover {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff6666;
+        }
+
+        .dropdown-btn.logout i {
+            color: #ff4444;
+        }
+
+        /* 添加下拉菜单动画 */
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-dropdown.show {
+            animation: dropdownFadeIn 0.3s ease forwards;
+        }
+
+        /* 添加按钮点击波纹效果 */
+        .dropdown-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+
+        .dropdown-btn:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        /* 优化表格动画效果 */
+        .table tbody tr {
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+        .table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+        .table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+        .table tbody tr:nth-child(4) { animation-delay: 0.4s; }
+        .table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+        /* 优化图表容器动画 */
+        .chart-container {
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .chart-container:nth-child(1) { animation-delay: 0.6s; }
+        .chart-container:nth-child(2) { animation-delay: 0.7s; }
+
+        /* 添加加载动画 */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-darker);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 198, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 删除按钮样式 */
+        .delete-btn {
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .warn-btn, .ban-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 6px;
+        }
+        .warn-btn {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.4);
+        }
+        .warn-btn:hover {
+            background: rgba(255, 193, 7, 0.35);
+        }
+        .ban-btn {
+            background: rgba(255, 87, 34, 0.2);
+            color: #ff5722;
+            border: 1px solid rgba(255, 87, 34, 0.4);
+        }
+        .ban-btn:hover {
+            background: rgba(255, 87, 34, 0.35);
+        }
+        .banned-tag {
+            color: #ff5722;
+            font-size: 0.85em;
+            margin-left: 4px;
+        }
+        .delete-btn:hover {
+            background: rgba(255, 59, 48, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 确认对话框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 198, 255, 0.2);
+            box-shadow: var(--card-shadow);
+            min-width: 300px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .modal-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(0, 198, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(0, 198, 255, 0.3);
+        }
+
+        .modal-btn.confirm {
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 分页按钮样式 */
+        .btn-sm {
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+            background: rgba(0, 198, 255, 0.1);
+            border: 1px solid rgba(0, 198, 255, 0.3);
+            color: var(--text-primary);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-sm:hover:not(:disabled) {
+            background: rgba(0, 198, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+
+<script src="static/mock-api.js"></script>
+</head>
+<body>
+    <div class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="user-menu">
+        <button class="user-menu-button" onclick="toggleDropdown()">
+            <i class="fas fa-user-circle"></i>
+            <span id="username">加载中...</span>
+            <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+            <button class="dropdown-btn" onclick="window.location.href='admin_feedbacks.html'">
+                <i class="fas fa-comment-alt"></i>
+                用户反馈
+            </button>
+            <button class="dropdown-btn" onclick="window.location.href='admin_data_lab.html'">
+                <i class="fas fa-database"></i>
+                数据实验室
+            </button>
+            <button class="dropdown-btn" onclick="window.location.href='admin_analysis_lab.html'">
+                <i class="fas fa-chart-line"></i>
+                分析结果实验室
+            </button>
+            <button class="dropdown-btn" onclick="window.location.href='admin_account_feedbacks.html'">
+                <i class="fas fa-flag"></i>
+                账号疑似反馈
+            </button>
+            <button class="dropdown-btn logout" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                退出登录
+            </button>
+        </div>
+    </div>
+
+    <div class="background">
+        <div class="tech-bg"></div>
+        <div class="grid-lines"></div>
+        <div id="particles"></div>
+    </div>
+
+    <div class="container">
+        <h1>管理员控制面板</h1>
+        <div class="row">
+            <div class="col-md-12">
+                <h2>用户列表</h2>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>最后活跃时间</th>
+                                <th>分析次数</th>
+                                <th>警告次数</th>
+                                <th>角色</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="pageInfo" style="margin-top: 20px; text-align: center; color: var(--text-secondary);"></div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <canvas id="analysisChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <canvas id="userRegistrationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3>确认删除</h3>
+            <p>是否删除此账号？</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+                <button class="modal-btn confirm" onclick="confirmDelete()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 限时封禁对话框 -->
+    <div class="modal" id="banModal">
+        <div class="modal-content">
+            <h3>限时封禁用户</h3>
+            <p id="banModalUserInfo" style="margin-bottom: 12px;"></p>
+            <label style="display:block; margin-bottom: 8px;">封禁时长：</label>
+            <select id="banDuration" style="width:100%; padding:8px; margin-bottom: 12px; background: var(--card-bg); color: var(--text-primary); border: 1px solid rgba(0,198,255,0.3); border-radius: 8px;">
+                <option value="1d">1 天</option>
+                <option value="3d">3 天</option>
+                <option value="5d">5 天</option>
+                <option value="1w">1 周</option>
+                <option value="2w">2 周</option>
+                <option value="3w">3 周</option>
+                <option value="1m">1 个月</option>
+            </select>
+            <label style="display:block; margin-bottom: 8px;">封禁原因：</label>
+            <textarea id="banReason" rows="3" placeholder="请输入封禁原因，如：发布虚假污染信息" style="width:100%; padding:8px; margin-bottom: 16px; background: var(--card-bg); color: var(--text-primary); border: 1px solid rgba(0,198,255,0.3); border-radius: 8px; resize: vertical;"></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeBanModal()">取消</button>
+                <button class="modal-btn confirm" onclick="confirmBan()">确定封禁</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 创建科技粒子
+        function createTechParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = Math.floor(window.innerWidth / 5);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('tech-particle');
+                
+                const size = Math.random() * 3 + 1;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100 + 100}%`;
+                
+                const delay = Math.random() * 10;
+                const duration = Math.random() * 20 + 10;
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                particle.style.opacity = Math.random() * 0.5 + 0.5;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // 获取用户数据
+        async function fetchUserData() {
+            try {
+                const response = await fetch('/api/admin/users', { credentials: 'same-origin' });
+                if (!response.ok) {
+                    throw new Error('获取用户数据失败');
+                }
+            const data = await response.json();
+            return data;
+            } catch (error) {
+                console.error('获取用户数据失败:', error);
+                throw error;
+            }
+        }
+
+        // 分页状态
+        let currentPage = 1;
+        const usersPerPage = 5;
+        let allUsers = [];
+
+        // 更新用户表格（分页显示）
+        function updateUserTable(users) {
+            allUsers = users;
+            renderCurrentPage();
+        }
+
+        function renderCurrentPage() {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+            
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = startIndex + usersPerPage;
+            const pageUsers = allUsers.slice(startIndex, endIndex);
+            
+            pageUsers.forEach(user => {
+                const row = document.createElement('tr');
+                const opBtns = user.role !== 'admin' ? [
+                    `<button class="warn-btn" onclick="showWarnModal(${user.id}, '${(user.username || '').replace(/'/g, "\\'")}')"><i class="fas fa-exclamation-triangle"></i> 警告</button>`,
+                    `<button class="ban-btn" onclick="showBanModal(${user.id}, '${(user.username || '').replace(/'/g, "\\'")}')"><i class="fas fa-ban"></i> 限时封禁</button>`,
+                    `<button class="delete-btn" onclick="showDeleteModal(${user.id})"><i class="fas fa-trash"></i> 删除</button>`
+                ].join(' ') : '';
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.last_active_at ? new Date(user.last_active_at).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '从未'}</td>
+                    <td>${user.analysis_count}</td>
+                    <td>${user.warning_count != null ? user.warning_count : 0}</td>
+                    <td>${user.role}${user.is_banned ? ' <span class="banned-tag">已封禁</span>' : ''}</td>
+                    <td>${opBtns}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // 更新分页信息
+            const totalPages = Math.ceil(allUsers.length / usersPerPage);
+            const pageInfo = document.getElementById('pageInfo');
+            if (pageInfo) {
+                pageInfo.innerHTML = `
+                    <button class="btn btn-sm" onclick="prevPage()" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                    <span style="margin: 0 15px;">第 ${currentPage} / ${totalPages} 页</span>
+                    <button class="btn btn-sm" onclick="nextPage()" ${currentPage >= totalPages ? 'disabled' : ''}>下一页</button>
+                `;
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderCurrentPage();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(allUsers.length / usersPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderCurrentPage();
+            }
+        }
+
+        // 分析次数图表分页
+        let analysisChartPage = 1;
+        const analysisChartPerPage = 5;
+        let analysisChartInstance = null;
+
+        // 创建分析次数图表（带分页）
+        function createAnalysisChart(users) {
+            const ctx = document.getElementById('analysisChart');
+            if (analysisChartInstance) {
+                analysisChartInstance.destroy();
+            }
+            
+            const totalPages = Math.ceil(users.length / analysisChartPerPage);
+            const startIndex = (analysisChartPage - 1) * analysisChartPerPage;
+            const endIndex = startIndex + analysisChartPerPage;
+            const pageUsers = users.slice(startIndex, endIndex);
+            
+            analysisChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: pageUsers.map(user => user.username),
+                    datasets: [{
+                        label: '分析次数',
+                        data: pageUsers.map(user => user.analysis_count),
+                        backgroundColor: 'rgba(0, 198, 255, 0.5)',
+                        borderColor: 'rgba(0, 198, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e6f1ff'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `分析次数统计 (第 ${analysisChartPage} / ${totalPages} 页)`,
+                            color: '#e6f1ff',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 198, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ccd6f6',
+                                // 纵坐标使用整数步长，分析几次就是几次
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 198, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ccd6f6'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 添加分页按钮
+            const chartContainer = ctx.parentElement;
+            let paginationDiv = chartContainer.querySelector('.chart-pagination');
+            if (!paginationDiv) {
+                paginationDiv = document.createElement('div');
+                paginationDiv.className = 'chart-pagination';
+                paginationDiv.style.cssText = 'margin-top: 15px; text-align: center; color: var(--text-secondary);';
+                chartContainer.appendChild(paginationDiv);
+            }
+            paginationDiv.innerHTML = `
+                <button class="btn btn-sm" onclick="prevAnalysisChartPage()" ${analysisChartPage === 1 ? 'disabled' : ''} style="margin-right: 10px;">上一页</button>
+                <span>第 ${analysisChartPage} / ${totalPages} 页</span>
+                <button class="btn btn-sm" onclick="nextAnalysisChartPage()" ${analysisChartPage >= totalPages ? 'disabled' : ''} style="margin-left: 10px;">下一页</button>
+            `;
+        }
+
+        function prevAnalysisChartPage() {
+            if (analysisChartPage > 1) {
+                analysisChartPage--;
+                createAnalysisChart(allUsers);
+            }
+        }
+
+        function nextAnalysisChartPage() {
+            const totalPages = Math.ceil(allUsers.length / analysisChartPerPage);
+            if (analysisChartPage < totalPages) {
+                analysisChartPage++;
+                createAnalysisChart(allUsers);
+            }
+        }
+
+        // 创建用户反馈污染程度图表（折线图，带分页）
+        let pollutionChartInstance = null;
+        let pollutionChartPage = 1;
+        const pollutionChartPerPage = 5;
+        let allPollutionData = {};
+
+        async function createPollutionLevelChart() {
+            try {
+                const response = await fetch('/api/admin/feedbacks', { credentials: 'same-origin' });
+                if (!response.ok) throw new Error('获取反馈数据失败');
+                const feedbacks = await response.json();
+                
+                const ctx = document.getElementById('userRegistrationChart');
+                if (pollutionChartInstance) {
+                    pollutionChartInstance.destroy();
+                }
+                
+                // 按用户分组统计污染程度
+                const userPollutionData = {};
+                feedbacks.forEach(f => {
+                    if (f.username && f.pollution_level) {
+                        if (!userPollutionData[f.username]) {
+                            userPollutionData[f.username] = {
+                                username: f.username,
+                                levels: { '无污染': 0, '轻微': 0, '中等': 0, '严重': 0, '非常严重': 0 }
+                            };
+                        }
+                        if (userPollutionData[f.username].levels.hasOwnProperty(f.pollution_level)) {
+                            userPollutionData[f.username].levels[f.pollution_level]++;
+                        }
+                    }
+                });
+
+                // 保存所有数据用于分页
+                allPollutionData = userPollutionData;
+                const allUsernames = Object.keys(allPollutionData);
+                
+                // 分页处理
+                const totalPages = Math.ceil(allUsernames.length / pollutionChartPerPage);
+                const startIndex = (pollutionChartPage - 1) * pollutionChartPerPage;
+                const endIndex = startIndex + pollutionChartPerPage;
+                const pageUsernames = allUsernames.slice(startIndex, endIndex);
+                
+                const labels = pageUsernames.map(uname => allPollutionData[uname].username);
+                const datasets = [
+                    {
+                        label: '无污染',
+                        data: pageUsernames.map(uname => allPollutionData[uname].levels['无污染'] || 0),
+                        borderColor: 'rgba(0, 255, 204, 1)',
+                        backgroundColor: 'rgba(0, 255, 204, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '轻微',
+                        data: pageUsernames.map(uname => allPollutionData[uname].levels['轻微'] || 0),
+                        borderColor: 'rgba(0, 255, 136, 1)',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '中等',
+                        data: pageUsernames.map(uname => allPollutionData[uname].levels['中等'] || 0),
+                        borderColor: 'rgba(255, 187, 0, 1)',
+                        backgroundColor: 'rgba(255, 187, 0, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '严重',
+                        data: pageUsernames.map(uname => allPollutionData[uname].levels['严重'] || 0),
+                        borderColor: 'rgba(255, 68, 68, 1)',
+                        backgroundColor: 'rgba(255, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '非常严重',
+                        data: pageUsernames.map(uname => allPollutionData[uname].levels['非常严重'] || 0),
+                        borderColor: 'rgba(255, 0, 0, 1)',
+                        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ];
+
+                pollutionChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 1.5,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#e6f1ff',
+                                    padding: 15
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: `用户反馈污染程度分布 (第 ${pollutionChartPage} / ${totalPages} 页)`,
+                                color: '#e6f1ff',
+                                font: {
+                                    size: 16
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 198, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#ccd6f6'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(0, 198, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#ccd6f6'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // 添加分页按钮
+                const chartContainer = ctx.parentElement;
+                let paginationDiv = chartContainer.querySelector('.pollution-chart-pagination');
+                if (!paginationDiv) {
+                    paginationDiv = document.createElement('div');
+                    paginationDiv.className = 'pollution-chart-pagination';
+                    paginationDiv.style.cssText = 'margin-top: 15px; text-align: center; color: var(--text-secondary);';
+                    chartContainer.appendChild(paginationDiv);
+                }
+                paginationDiv.innerHTML = `
+                    <button class="btn btn-sm" onclick="prevPollutionChartPage()" ${pollutionChartPage === 1 ? 'disabled' : ''} style="margin-right: 10px;">上一页</button>
+                    <span>第 ${pollutionChartPage} / ${totalPages} 页</span>
+                    <button class="btn btn-sm" onclick="nextPollutionChartPage()" ${pollutionChartPage >= totalPages ? 'disabled' : ''} style="margin-left: 10px;">下一页</button>
+                `;
+            } catch (error) {
+                console.error('创建污染程度图表失败:', error);
+            }
+        }
+
+        function prevPollutionChartPage() {
+            if (pollutionChartPage > 1) {
+                pollutionChartPage--;
+                createPollutionLevelChart();
+            }
+        }
+
+        function nextPollutionChartPage() {
+            const totalPages = Math.ceil(Object.keys(allPollutionData).length / pollutionChartPerPage);
+            if (pollutionChartPage < totalPages) {
+                pollutionChartPage++;
+                createPollutionLevelChart();
+            }
+        }
+
+        // 添加用户菜单功能
+        function toggleDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userMenu = document.querySelector('.user-menu');
+            if (!userMenu.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 获取用户信息
+        async function fetchUserInfo() {
+            try {
+                const response = await fetch('/api/user', { credentials: 'same-origin' });
+                if (!response.ok) {
+                    if (response.status === 401) { window.location.href = 'login.html'; return; }
+                    throw new Error('获取用户信息失败');
+                }
+                const data = await response.json();
+                document.getElementById('username').textContent = data.username;
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                throw error;
+            }
+        }
+
+        let currentDeleteUserId = null;
+        let currentBanUserId = null;
+
+        // 显示删除确认对话框
+        function showDeleteModal(userId) {
+            currentDeleteUserId = userId;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        // 关闭对话框
+        function closeModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            currentDeleteUserId = null;
+        }
+
+        // 警告用户
+        function showWarnModal(userId, username) {
+            if (!confirm('确定对该用户发送活跃度警告吗？该用户下次登录及进入首页时将看到活跃度提示弹窗。')) return;
+            (async () => {
+                try {
+                    const res = await fetch(`/api/admin/warn_user/${userId}`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } });
+                    const data = await res.json();
+                    if (res.ok) {
+                        alert(data.message || '已发送警告');
+                        const users = await fetchUserData();
+                        updateUserTable(users);
+                        renderCurrentPage();
+                    } else {
+                        alert(data.error || '操作失败');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('操作失败');
+                }
+            })();
+        }
+
+        // 显示限时封禁对话框
+        function showBanModal(userId, username) {
+            currentBanUserId = userId;
+            document.getElementById('banModalUserInfo').textContent = '用户：' + username;
+            document.getElementById('banReason').value = '';
+            document.getElementById('banModal').style.display = 'block';
+        }
+
+        function closeBanModal() {
+            document.getElementById('banModal').style.display = 'none';
+            currentBanUserId = null;
+        }
+
+        async function confirmBan() {
+            if (!currentBanUserId) return;
+            const duration = document.getElementById('banDuration').value;
+            const reason = document.getElementById('banReason').value.trim() || '违反平台规定';
+            try {
+                const res = await fetch('/api/admin/ban_user', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentBanUserId, duration, reason })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || '已限时封禁');
+                    closeBanModal();
+                    const users = await fetchUserData();
+                    updateUserTable(users);
+                    renderCurrentPage();
+                } else {
+                    alert(data.error || '封禁失败');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('封禁失败');
+            }
+        }
+
+        // 确认删除用户
+        async function confirmDelete() {
+            if (!currentDeleteUserId) return;
+
+            try {
+                const response = await fetch(`/api/admin/delete_user/${currentDeleteUserId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin'
+                });
+                
+                if (response.ok) {
+                    // 刷新用户列表
+                    const users = await fetchUserData();
+                    updateUserTable(users);
+                    // 如果当前页没有数据了，回到上一页
+                    const totalPages = Math.ceil(users.length / usersPerPage);
+                    if (currentPage > totalPages && totalPages > 0) {
+                        currentPage = totalPages;
+                    }
+                    renderCurrentPage();
+                    closeModal();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || '删除失败');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('删除失败');
+            }
+        }
+
+        // 修改初始化函数
+        async function initPage() {
+            try {
+            createTechParticles();
+            await fetchUserInfo();
+            const users = await fetchUserData();
+            updateUserTable(users);
+            createAnalysisChart(users);
+            await createPollutionLevelChart();
+            } catch (error) {
+                console.error('初始化页面失败:', error);
+                alert('加载数据失败，请刷新页面重试');
+            } finally {
+                // 无论成功失败都隐藏加载动画
+                document.querySelector('.loading').classList.add('hide');
+            }
+        }
+
+        // 添加页面加载超时处理
+            setTimeout(() => {
+            const loading = document.querySelector('.loading');
+            if (loading && !loading.classList.contains('hide')) {
+                loading.classList.add('hide');
+                alert('页面加载超时，请刷新重试');
+            }
+        }, 10000); // 10秒超时
+
+        // 修改退出登录处理
+        document.getElementById('logoutBtn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            try {
+                const response = await fetch('/api/logout', { credentials: 'same-origin' });
+                if (response.ok) {
+                window.location.href = 'login.html';
+                } else {
+                    throw new Error('退出登录失败');
+                }
+            } catch (error) {
+                console.error('退出登录失败:', error);
+                alert('退出登录失败，请重试');
+            }
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+    <link rel="stylesheet" href="static/target-cursor.css">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="static/target-cursor.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        initTargetCursor({ targetSelector: 'a, button, .cursor-target', spinDuration: 2, hideDefaultCursor: true });
+      });
+    </script>
+</body>
+</html> 

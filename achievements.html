@@ -1,0 +1,1890 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>成就系统 - 河流污染监测系统</title>
+<style>
+:root {
+  --base-unit: min(1.6vh, 1.2vw);
+  --primary-color: #00c6ff;
+  --secondary-color: #0072ff;
+  --accent-color: #00ffcc;
+  --bg-dark: #0a192f;
+  --bg-darker: #020c1b;
+  --card-bg: rgba(10, 25, 47, 0.8);
+  --card-glass: rgba(100, 150, 255, 0.1);
+  --text-primary: #e6f1ff;
+  --text-secondary: #ccd6f6;
+  --card-shadow: 0 8px 32px rgba(0, 114, 255, 0.1);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --glow: 0 0 10px rgba(0, 198, 255, 0.7);
+  --success-color: #00ff88;
+  --warning-color: #ffbb00;
+  --danger-color: #ff4444;
+}
+
+/* 复用主页面的背景和特效样式 */
+.background {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.tech-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(0, 198, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0, 114, 255, 0.15) 0%, transparent 40%),
+    linear-gradient(to bottom, var(--bg-darker) 0%, var(--bg-dark) 100%);
+  filter: blur(20px);
+  opacity: 0.8;
+  z-index: 1;
+  will-change: transform;
+  animation: bgPulse 10s ease-in-out infinite;
+}
+
+@keyframes bgPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.grid-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0, 198, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 198, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 2;
+  opacity: 0.3;
+  animation: gridMove 20s linear infinite;
+  will-change: transform;
+}
+
+.particle-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.floating-particle {
+  position: absolute;
+  bottom: -60px;
+  width: 6px;
+  height: 6px;
+  background: rgba(0, 198, 255, 0.45);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(0, 198, 255, 0.3);
+  animation: backgroundFloat linear infinite;
+  opacity: 0;
+  filter: blur(0.4px);
+}
+
+@keyframes backgroundFloat {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  80% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate3d(40px, -120vh, 0) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes gridMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(40px); }
+}
+
+/* 成就卡片样式 */
+.achievement-card {
+  background: linear-gradient(135deg, var(--card-glass), rgba(0, 114, 255, 0.2));
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  width: 380px;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  animation: cardAppear 0.6s ease-out backwards;
+}
+
+.achievement-card:hover {
+  transform: translateY(-8px) scale(1.02) translateZ(0);
+  box-shadow: 0 15px 35px rgba(0, 114, 255, 0.3);
+  border-color: rgba(0, 198, 255, 0.4);
+}
+
+.achievement-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(0, 198, 255, 0.1),
+    rgba(0, 255, 204, 0.1)
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.achievement-card:hover::before {
+  opacity: 1;
+}
+
+.achievement-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+  text-shadow: 0 0 15px rgba(0, 198, 255, 0.5);
+  transition: transform 0.4s ease;
+}
+
+.achievement-card:hover .achievement-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.achievement-title {
+  font-size: 1.5em;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.achievement-progress {
+  height: 6px;
+  background: rgba(0, 198, 255, 0.1);
+  border-radius: 3px;
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(0, 198, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--primary-color),
+    var(--accent-color)
+  );
+  border-radius: 4px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  will-change: width;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: progressShine 2s linear infinite;
+  will-change: transform;
+}
+
+@keyframes progressShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.achievement-description {
+  color: var(--text-secondary);
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+.achievement-reward {
+  color: var(--accent-color);
+  font-size: 0.9em;
+  margin-top: 8px;
+}
+
+/* 导航按钮样式 */
+.nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 30px 0;
+}
+
+.nav-button {
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 198, 255, 0.4);
+}
+
+.nav-button:active {
+  transform: translateY(1px);
+}
+
+.nav-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.nav-button:hover::before {
+  left: 100%;
+}
+
+.nav-icon {
+  font-size: 1.2em;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* 系统介绍卡片样式 */
+.system-intro {
+  background: linear-gradient(135deg, var(--card-glass), rgba(0, 114, 255, 0.2));
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+.system-intro h2 {
+  color: var(--primary-color);
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.feature-item {
+  background: rgba(0, 198, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.feature-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, 
+    rgba(0, 198, 255, 0.1),
+    rgba(0, 255, 204, 0.1)
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.feature-item:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0, 114, 255, 0.2);
+  border-color: rgba(0, 198, 255, 0.4);
+}
+
+.feature-item:hover::before {
+  opacity: 1;
+}
+
+.feature-item h3 {
+  color: var(--accent-color);
+  font-size: 1.3em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.4s ease;
+}
+
+.feature-item:hover h3 {
+  transform: translateX(5px);
+}
+
+.feature-item p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  transition: transform 0.4s ease;
+}
+
+.feature-item:hover p {
+  transform: translateX(5px);
+}
+
+/* 添加图标动画 */
+.feature-item h3::before {
+  content: attr(data-icon);
+  font-size: 1.2em;
+  transition: transform 0.4s ease;
+}
+
+.feature-item:hover h3::before {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* 添加光效 */
+.feature-item::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.feature-item:hover::after {
+  transform: rotate(45deg) translate(50%, 50%);
+}
+
+/* 特效展示区域 */
+.effects-showcase {
+  margin-top: 40px;
+  padding: 30px;
+  background: linear-gradient(135deg, var(--card-glass), rgba(0, 114, 255, 0.2));
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+.effects-showcase h2 {
+  color: var(--primary-color);
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.effects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+  justify-items: center;
+}
+
+.effect-item {
+  background: rgba(0, 198, 255, 0.1);
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  transition: transform 0.3s ease;
+  width: 200px;
+}
+
+.effect-item:hover {
+  transform: translateY(-5px);
+}
+
+.effect-item.hologram {
+  grid-column: 2 / 3;
+  margin: 0 auto;
+}
+
+.effect-icon {
+  font-size: 2em;
+  margin-bottom: 10px;
+  color: var(--accent-color);
+}
+
+.effect-name {
+  color: var(--text-primary);
+  font-size: 1.1em;
+  margin-bottom: 5px;
+}
+
+.effect-desc {
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+/* 容器样式 */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 0.8s ease-out;
+  overflow-x: hidden;
+}
+
+.page-title {
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 2.5em;
+  margin-bottom: 40px;
+  text-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+  
+  .nav-buttons {
+    flex-direction: column;
+  }
+  
+  .nav-button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.achievement-card {
+    transition: all 0.3s ease;
+}
+
+.achievement-card.achieved {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 20px rgba(0, 198, 255, 0.3);
+}
+
+.achievement-card.achieved .achievement-title {
+    color: var(--accent-color);
+}
+
+.achievement-card.achieved .progress-bar {
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background: var(--bg-darker);
+  color: var(--text-primary);
+  min-height: 100vh;
+  background-image: 
+    linear-gradient(rgba(0, 198, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 198, 255, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  color: var(--primary-color);
+}
+
+.title {
+  color: var(--primary-color);
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 10px rgba(0, 198, 255, 0.3);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.achievements-container {
+  margin: 2.2rem 0;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.achievements-row {
+  display: flex;
+  gap: 1.8rem;
+  margin-bottom: 1.8rem;
+  will-change: transform;
+  width: fit-content;
+}
+
+.achievements-row.row1 {
+  animation: scrollRight 50s ease-in-out infinite;
+  padding-left: 0;
+}
+
+.achievements-row.row2 {
+  animation: scrollLeft 50s ease-in-out infinite;
+  padding-left: 0;
+  justify-content: flex-end;
+}
+
+@keyframes scrollRight {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.9rem)); }
+}
+
+@keyframes scrollLeft {
+  0% { transform: translateX(calc(-50% - 0.9rem)); }
+  100% { transform: translateX(0); }
+}
+
+.achievements-row {
+  will-change: transform;
+}
+
+.achievements-grid {
+  width: 100%;
+  overflow: hidden;
+  margin: 2rem 0;
+}
+
+.achievement-card {
+  background: linear-gradient(135deg, var(--card-glass), rgba(0, 114, 255, 0.2));
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  width: 380px;
+}
+
+.achievement-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0, 114, 255, 0.3);
+  border-color: rgba(0, 198, 255, 0.4);
+}
+
+.achievement-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(0, 198, 255, 0.1),
+    rgba(0, 255, 204, 0.1)
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.achievement-card:hover::before {
+  opacity: 1;
+}
+
+.achievement-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+  text-shadow: 0 0 15px rgba(0, 198, 255, 0.5);
+  transition: transform 0.4s ease;
+}
+
+.achievement-card:hover .achievement-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.achievement-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.achievement-desc {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(0, 198, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.achievement-locked {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 25, 47, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.achievement-card.locked:hover .achievement-locked {
+  opacity: 1;
+}
+
+.lock-icon {
+  font-size: 2rem;
+  color: var(--text-secondary);
+}
+
+.stats-section {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 198, 255, 0.1);
+}
+
+.stats-title {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2rem;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+  animation: countUp 0.6s ease-out;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.achievement-card.unlocked {
+  animation: achievementUnlock 0.8s ease-out;
+  will-change: transform, box-shadow;
+}
+
+@keyframes achievementUnlock {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* 优化粒子特效 */
+.tech-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 198, 255, 0.8);
+  box-shadow: var(--glow);
+  animation: tech-float linear infinite;
+  z-index: 3;
+  backdrop-filter: blur(2px);
+  will-change: transform, opacity;
+}
+
+@keyframes tech-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* 添加页面加载动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 优化成就卡片动画 */
+.achievement-card {
+  animation: cardAppear 0.6s ease-out backwards;
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 添加成就解锁动画 */
+@keyframes achievementUnlock {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.achievement-card.unlocked {
+  animation: achievementUnlock 0.8s ease-out;
+}
+
+/* 优化进度条动画 */
+.progress-fill {
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 添加滚动平滑效果 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 优化按钮悬停效果 */
+.nav-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 198, 255, 0.4);
+}
+
+/* 下拉菜单样式 */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--card-bg);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  right: 0;
+  border: 1px solid rgba(0, 198, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #00c6ff;
+  font-size: 1em;
+  padding: 10px 0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+  text-align: left;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.dropdown-btn:hover {
+  background: rgba(0,198,255,0.08);
+  color: #00ffcc;
+}
+.dropdown-btn.logout {
+  color: #ff4444;
+}
+.dropdown-btn.logout:hover {
+  background: rgba(255,68,68,0.08);
+  color: #fff;
+}
+
+/* 修改密码弹窗样式 */
+.change-pwd-form {
+  background: linear-gradient(135deg, rgba(10,25,47,0.98) 80%, rgba(0,198,255,0.08));
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,198,255,0.18);
+  border: 1.5px solid rgba(0,198,255,0.18);
+  padding: 32px 28px 20px 28px;
+  min-width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.4s;
+}
+.change-pwd-title {
+  color: var(--primary-color);
+  font-size: 1.5em;
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0,198,255,0.18);
+}
+.change-pwd-label {
+  color: var(--text-secondary);
+  font-size: 1em;
+  margin-bottom: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.change-pwd-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,198,255,0.18);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1em;
+  padding: 10px 12px;
+  margin-top: 2px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.change-pwd-input:focus {
+  outline: none;
+  border: 1.5px solid var(--primary-color);
+  box-shadow: 0 0 8px rgba(0,198,255,0.18);
+  background: rgba(0,198,255,0.06);
+}
+.change-pwd-btn {
+  flex: 1;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,198,255,0.08);
+}
+.change-pwd-btn:hover {
+  background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+  box-shadow: 0 4px 16px rgba(0,198,255,0.18);
+}
+.change-pwd-btn.cancel {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  border: 1px solid rgba(0,198,255,0.12);
+}
+.change-pwd-btn.cancel:hover {
+  background: rgba(0,198,255,0.08);
+  color: var(--primary-color);
+}
+.change-pwd-msg {
+  min-height: 18px;
+  font-size: 0.95em;
+  margin-top: -8px;
+  margin-bottom: 0;
+  text-align: center;
+  color: #ff4444;
+  transition: color 0.2s;
+}
+.change-pwd-msg.success {
+  color: #00ff88;
+}
+@media (max-width: 480px) {
+  .change-pwd-form { padding: 18px 6vw; min-width: 0; }
+}
+
+/* 添加卡片悬停效果 */
+.achievement-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.achievement-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0, 114, 255, 0.3);
+}
+
+/* 优化统计数字动画 */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-value {
+  animation: countUp 0.6s ease-out;
+}
+
+/* 添加页面切换动画 */
+.page-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-darker);
+  z-index: 1000;
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition.active {
+  transform: translateY(0);
+}
+
+/* 精简：移除右上用户与社区按钮样式 */
+
+/* 成就解锁弹窗样式 */
+.achievement-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(2, 12, 27, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.achievement-popup-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.achievement-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              visibility 0.4s ease;
+  pointer-events: none;
+}
+
+.achievement-popup.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: all;
+}
+
+.achievement-popup-content {
+  background: linear-gradient(135deg, rgba(10, 25, 47, 0.98), rgba(0, 114, 255, 0.2));
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 198, 255, 0.4),
+              0 0 40px rgba(0, 255, 204, 0.3);
+  border: 2px solid rgba(0, 198, 255, 0.5);
+  backdrop-filter: blur(15px);
+  text-align: center;
+  min-width: 350px;
+  max-width: 500px;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-popup-content::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(0, 198, 255, 0.1),
+    transparent
+  );
+  animation: rotateGlow 3s linear infinite;
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.achievement-popup-icon {
+  font-size: 5rem;
+  margin-bottom: 1.5rem;
+  animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s backwards,
+             pulse 2s ease-in-out infinite 0.8s;
+  filter: drop-shadow(0 0 20px rgba(0, 198, 255, 0.6));
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.achievement-popup-title {
+  color: var(--primary-color);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 15px rgba(0, 198, 255, 0.5);
+  position: relative;
+  z-index: 1;
+  animation: slideDown 0.5s ease-out 0.3s backwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.achievement-popup-desc {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+  animation: slideDown 0.5s ease-out 0.4s backwards;
+}
+
+.achievement-popup-btn {
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+  position: relative;
+  z-index: 1;
+  animation: slideDown 0.5s ease-out 0.5s backwards;
+}
+
+.achievement-popup-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 198, 255, 0.5);
+}
+
+.achievement-popup-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.achievement-popup-particle {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+  animation: particleAnimation 1.5s ease-out forwards;
+}
+
+@keyframes particleAnimation {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(0);
+  }
+}
+</style>
+
+<script src="static/mock-api.js"></script>
+</head>
+<body>
+<div class="background">
+  <div class="tech-bg"></div>
+  <div class="grid-lines"></div>
+  <div class="particle-layer" id="bgParticles"></div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1 class="title">成就系统</h1>
+    <p class="subtitle">记录您的环保贡献，解锁更多成就</p>
+  </div>
+
+  <div class="nav-buttons">
+    <a href="Untitled-1.html" class="nav-button">
+      <span class="nav-icon">🏠</span>
+      <span>返回首页</span>
+    </a>
+    <a href="/camera.html" class="nav-button">
+      <span class="nav-icon">📷</span>
+      <span>拍照分析</span>
+    </a>
+  </div>
+
+  <div class="stats-section">
+    <h2 class="stats-title">统计信息</h2>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="totalAnalysis">0</div>
+        <div class="stat-label">总分析次数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="consecutiveDays">0</div>
+        <div class="stat-label">连续监测天数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="unlockedAchievements">0</div>
+        <div class="stat-label">已解锁成就</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="achievements-grid" id="achievementsGrid">
+    <!-- 成就卡片将通过 JavaScript 动态生成 -->
+  </div>
+
+</div>
+
+<dialog id="changePwdDialog" style="padding:0;border:none;background:transparent;">
+  <form id="changePwdForm" method="dialog" class="change-pwd-form">
+    <h3 class="change-pwd-title">修改密码</h3>
+    <label class="change-pwd-label">用户名
+      <input type="text" id="pwdUsername" readonly class="change-pwd-input">
+    </label>
+    <label class="change-pwd-label">原密码
+      <input type="password" id="oldPassword" required class="change-pwd-input">
+    </label>
+    <label class="change-pwd-label">新密码
+      <input type="password" id="newPassword" required class="change-pwd-input">
+    </label>
+    <label class="change-pwd-label">确认新密码
+      <input type="password" id="confirmPassword" required class="change-pwd-input">
+    </label>
+    <div id="pwdMsg" class="change-pwd-msg"></div>
+    <div style="display:flex;gap:16px;margin-top:8px;">
+      <button type="submit" class="change-pwd-btn">确认</button>
+      <button type="button" class="change-pwd-btn cancel" onclick="document.getElementById('changePwdDialog').close()">取消</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 成就解锁弹窗 -->
+<div class="achievement-popup-overlay" id="achievementOverlay"></div>
+<div class="achievement-popup" id="achievementPopup">
+  <div class="achievement-popup-content">
+    <div class="achievement-popup-icon" id="popupIcon"></div>
+    <h2 class="achievement-popup-title" id="popupTitle"></h2>
+    <p class="achievement-popup-desc" id="popupDesc"></p>
+    <button class="achievement-popup-btn" onclick="closeAchievementPopup()">太棒了！</button>
+  </div>
+  <div class="achievement-popup-particles" id="popupParticles"></div>
+</div>
+
+<!-- 添加社区按钮 -->
+<div class="community-button-container">
+  <a href="/community.html" class="community-button" onclick="handleCommunityClick(event)">
+    <span class="community-icon">👥</span>
+    <span class="community-text">社区</span>
+  </a>
+</div>
+
+<script>
+// 成就系统数据
+const achievements = {
+    riverGuardian: {
+        id: 'riverGuardian',
+        name: '河流守护者',
+        description: '完成5次河流污染分析',
+        icon: '🌊',
+        target: 5
+    },
+    pollutionDetective: {
+        id: 'pollutionDetective',
+        name: '污染侦探',
+        description: '完成10次河流污染分析',
+        icon: '🔍',
+        target: 10
+    },
+    dataAnalyst: {
+        id: 'dataAnalyst',
+        name: '数据分析师',
+        description: '完成20次河流污染分析',
+        icon: '📊',
+        target: 20
+    },
+    ecoPioneer: {
+        id: 'ecoPioneer',
+        name: '环保先锋',
+        description: '完成30次河流污染分析',
+        icon: '🌱',
+        target: 30
+    },
+    communityContributor: {
+        id: 'communityContributor',
+        name: '社区贡献者',
+        description: '完成50次河流污染分析',
+        icon: '👥',
+        target: 50
+    },
+    waterGuardian: {
+        id: 'waterGuardian',
+        name: '水资源守护者',
+        description: '完成100次河流污染分析',
+        icon: '💧',
+        target: 100
+    },
+    feedbackContributor: {
+        id: 'feedbackContributor',
+        name: '反馈达人',
+        description: '提交1次污染反馈',
+        icon: '📝',
+        target: 1,
+        type: 'feedback'
+    },
+    feedbackExpert: {
+        id: 'feedbackExpert',
+        name: '反馈专家',
+        description: '提交5次污染反馈',
+        icon: '📋',
+        target: 5,
+        type: 'feedback'
+    },
+    feedbackMaster: {
+        id: 'feedbackMaster',
+        name: '反馈大师',
+        description: '提交10次污染反馈',
+        icon: '📊',
+        target: 10,
+        type: 'feedback'
+    },
+    feedbackChampion: {
+        id: 'feedbackChampion',
+        name: '反馈冠军',
+        description: '提交20次污染反馈',
+        icon: '🏆',
+        target: 20,
+        type: 'feedback'
+    },
+    riverExplorer: {
+        id: 'riverExplorer',
+        name: '河流探索者',
+        description: '完成3次河流污染分析',
+        icon: '🗺️',
+        target: 3
+    },
+    waterWatcher: {
+        id: 'waterWatcher',
+        name: '水质观察员',
+        description: '完成15次河流污染分析',
+        icon: '👁️',
+        target: 15
+    },
+    ecoWarrior: {
+        id: 'ecoWarrior',
+        name: '环保战士',
+        description: '完成40次河流污染分析',
+        icon: '⚔️',
+        target: 40
+    },
+    masterAnalyst: {
+        id: 'masterAnalyst',
+        name: '分析大师',
+        description: '完成60次河流污染分析',
+        icon: '🎓',
+        target: 60
+    },
+    pollutionHunter: {
+        id: 'pollutionHunter',
+        name: '污染猎手',
+        description: '完成80次河流污染分析',
+        icon: '🎯',
+        target: 80
+    },
+    photoNovice: {
+        id: 'photoNovice',
+        name: '拍照新手',
+        description: '完成第1次拍照分析',
+        icon: '📸',
+        target: 1,
+        type: 'analysis'
+    },
+    photoApprentice: {
+        id: 'photoApprentice',
+        name: '拍照学徒',
+        description: '完成5次拍照分析',
+        icon: '📷',
+        target: 5,
+        type: 'analysis'
+    },
+    photoExpert: {
+        id: 'photoExpert',
+        name: '拍照小能手',
+        description: '完成10次拍照分析',
+        icon: '📸✨',
+        target: 10,
+        type: 'analysis'
+    },
+    photoMaster: {
+        id: 'photoMaster',
+        name: '拍照大师',
+        description: '完成25次拍照分析',
+        icon: '📷🏆',
+        target: 25,
+        type: 'analysis'
+    },
+    feedbackHelper: {
+        id: 'feedbackHelper',
+        name: '反馈助手',
+        description: '提交3次污染反馈',
+        icon: '✍️',
+        target: 3,
+        type: 'feedback'
+    },
+    feedbackHero: {
+        id: 'feedbackHero',
+        name: '反馈英雄',
+        description: '提交15次污染反馈',
+        icon: '🦸',
+        target: 15,
+        type: 'feedback'
+    },
+    dailyWatcher: {
+        id: 'dailyWatcher',
+        name: '每日观察者',
+        description: '连续3天进行分析',
+        icon: '📅',
+        target: 3,
+        type: 'consecutive'
+    },
+    weeklyGuardian: {
+        id: 'weeklyGuardian',
+        name: '周度守护者',
+        description: '连续7天进行分析',
+        icon: '🗓️',
+        target: 7,
+        type: 'consecutive'
+    },
+    monthlyHero: {
+        id: 'monthlyHero',
+        name: '月度英雄',
+        description: '连续30天进行分析',
+        icon: '📆',
+        target: 30,
+        type: 'consecutive'
+    },
+    firstAnalysis: {
+        id: 'firstAnalysis',
+        name: '初次尝试',
+        description: '完成首次河流分析',
+        icon: '🌟',
+        target: 1,
+        type: 'analysis'
+    },
+    rapidAnalyzer: {
+        id: 'rapidAnalyzer',
+        name: '快速分析员',
+        description: '在一天内完成5次分析',
+        icon: '⚡',
+        target: 5,
+        type: 'daily'
+    }
+};
+
+// 成就解锁队列
+let achievementQueue = [];
+let isShowingAchievement = false;
+
+// 添加成就解锁弹窗相关函数
+function showAchievementPopup(achievement) {
+    if (isShowingAchievement) {
+        // 如果正在显示成就，将其加入队列
+        achievementQueue.push(achievement);
+        return;
+    }
+    
+    isShowingAchievement = true;
+    const popup = document.getElementById('achievementPopup');
+    const overlay = document.getElementById('achievementOverlay');
+    const icon = document.getElementById('popupIcon');
+    const title = document.getElementById('popupTitle');
+    const desc = document.getElementById('popupDesc');
+    
+    icon.textContent = achievement.icon;
+    title.textContent = `解锁成就：${achievement.name}`;
+    desc.textContent = achievement.description;
+    
+    overlay.classList.add('active');
+    popup.classList.add('active');
+    
+    // 创建粒子效果
+    createParticles();
+}
+
+function closeAchievementPopup() {
+    const popup = document.getElementById('achievementPopup');
+    const overlay = document.getElementById('achievementOverlay');
+    
+    popup.classList.remove('active');
+    overlay.classList.remove('active');
+    
+    // 等待动画完成后再显示下一个
+    setTimeout(() => {
+        isShowingAchievement = false;
+        // 如果队列中还有成就，显示下一个
+        if (achievementQueue.length > 0) {
+            const nextAchievement = achievementQueue.shift();
+            setTimeout(() => {
+                showAchievementPopup(nextAchievement);
+            }, 300); // 短暂延迟以便动画完成
+        }
+    }, 400);
+}
+
+function createParticles() {
+    const container = document.getElementById('popupParticles');
+    container.innerHTML = '';
+    
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'achievement-popup-particle';
+        
+        // 随机大小
+        const size = Math.random() * 8 + 4;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // 随机位置
+        const startX = Math.random() * 100;
+        const startY = Math.random() * 100;
+        particle.style.left = `${startX}%`;
+        particle.style.top = `${startY}%`;
+        
+        // 随机方向
+        const tx = (Math.random() - 0.5) * 200;
+        const ty = (Math.random() - 0.5) * 200;
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        
+        // 随机颜色
+        const hue = Math.random() * 60 + 180; // 蓝色到青色范围
+        particle.style.background = `hsl(${hue}, 100%, 70%)`;
+        
+        // 添加动画
+        particle.style.animation = `particleAnimation ${Math.random() * 2 + 1}s ease-out forwards`;
+        
+        container.appendChild(particle);
+    }
+}
+
+// 修改初始化成就数据的函数
+function initAchievements() {
+    Promise.all([
+        fetch('/api/user_achievements').then(res => res.json()),
+        fetch('/api/history').then(res => res.json())
+    ]).then(([achievementData, historyData]) => {
+        const analysisCount = achievementData.analysis_count || 0;
+        const feedbackCount = historyData.feedbacks ? historyData.feedbacks.length : 0;
+        const consecutiveDays = achievementData.consecutiveDays || 0;
+        
+        // 获取之前已解锁的成就列表
+        const previousUnlocked = JSON.parse(localStorage.getItem('previousUnlockedAchievements') || '[]');
+        const currentUnlocked = [];
+            
+        // 更新统计信息
+        animateValue('totalAnalysis', 0, analysisCount, 1000);
+        animateValue('consecutiveDays', 0, consecutiveDays, 1000);
+            
+        let unlockedCount = 0;
+        Object.keys(achievements).forEach(key => {
+            const achievement = achievements[key];
+            let current = 0;
+            if (achievement.type === 'feedback') {
+                current = feedbackCount;
+            } else if (achievement.type === 'consecutive') {
+                current = consecutiveDays;
+            } else {
+                current = analysisCount;
+            }
+            if (current >= achievement.target) {
+                unlockedCount++;
+                currentUnlocked.push(achievement.id);
+                // 检查是否是新解锁的成就
+                if (!previousUnlocked.includes(achievement.id)) {
+                    // 将新解锁的成就添加到队列
+                    achievementQueue.push(achievement);
+                }
+            }
+        });
+        
+        animateValue('unlockedAchievements', 0, unlockedCount, 1000);
+
+        // 保存当前已解锁的成就列表
+        localStorage.setItem('previousUnlockedAchievements', JSON.stringify(currentUnlocked));
+        
+        // 如果有新解锁的成就，显示第一个
+        if (achievementQueue.length > 0 && !isShowingAchievement) {
+            setTimeout(() => {
+                const firstAchievement = achievementQueue.shift();
+                showAchievementPopup(firstAchievement);
+            }, 500);
+        }
+
+        // 更新成就卡片显示 - 两排横向滚动
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+
+        // 创建容器
+        const container = document.createElement('div');
+        container.className = 'achievements-container';
+        
+        // 创建第一排（向右滚动）
+        const row1 = document.createElement('div');
+        row1.className = 'achievements-row row1';
+        
+        // 创建第二排（向左滚动）
+        const row2 = document.createElement('div');
+        row2.className = 'achievements-row row2';
+        
+        const allAchievements = Object.values(achievements);
+        const totalCards = allAchievements.length;
+        
+        // 计算每排应该有多少卡片（确保两排填满）
+        const cardsPerRow = Math.ceil(totalCards / 2);
+        
+        // 创建卡片并复制以实现首尾相接
+        function createCard(achievement, analysisCount, feedbackCount, consecutiveDays) {
+            let currentValue = 0;
+            if (achievement.type === 'feedback') {
+                currentValue = feedbackCount;
+            } else if (achievement.type === 'consecutive') {
+                currentValue = consecutiveDays;
+            } else {
+                currentValue = analysisCount;
+            }
+            const progress = Math.min((currentValue / achievement.target) * 100, 100);
+            const isUnlocked = currentValue >= achievement.target;
+
+            const card = document.createElement('div');
+            card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+            card.style.flexShrink = '0';
+            card.style.width = '380px';
+                
+            card.innerHTML = `
+                <div class="achievement-icon">${achievement.icon || '🏆'}</div>
+                <h3 class="achievement-title">${achievement.name}</h3>
+                <p class="achievement-desc">${achievement.description}</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <div class="progress-text">
+                    <span>${currentValue}/${achievement.target}</span>
+                    <span>${Math.round(progress)}%</span>
+                </div>
+                ${!isUnlocked ? `
+                    <div class="achievement-locked">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                ` : ''}
+            `;
+            return card;
+        }
+        
+        // 第一排：向右滚动，创建卡片并复制以实现无缝循环
+        const row1Achievements = allAchievements.slice(0, cardsPerRow);
+        // 创建第一组卡片
+        row1Achievements.forEach(achievement => {
+            const card = createCard(achievement, analysisCount, feedbackCount, consecutiveDays);
+            row1.appendChild(card);
+        });
+        // 复制第一组以实现无缝循环（至少复制2次以确保流畅）
+        for (let i = 0; i < 2; i++) {
+            row1Achievements.forEach(achievement => {
+                const card = createCard(achievement, analysisCount, feedbackCount, consecutiveDays);
+                row1.appendChild(card);
+            });
+        }
+        
+        // 第二排：向左滚动，创建卡片并复制以实现无缝循环
+        let secondRowAchievements = allAchievements.slice(cardsPerRow);
+        // 如果第二排不够，补充一些卡片使其与第一排数量相近
+        while (secondRowAchievements.length < cardsPerRow && allAchievements.length > cardsPerRow) {
+            const remaining = cardsPerRow - secondRowAchievements.length;
+            secondRowAchievements = [...secondRowAchievements, ...allAchievements.slice(0, Math.min(remaining, allAchievements.length))];
+        }
+        
+        // 创建第二组卡片（反转顺序以优化视觉效果）
+        const reversedSecondRow = [...secondRowAchievements].reverse();
+        reversedSecondRow.forEach(achievement => {
+            const card = createCard(achievement, analysisCount, feedbackCount, consecutiveDays);
+            row2.appendChild(card);
+        });
+        // 复制第二组以实现无缝循环（至少复制2次以确保流畅）
+        for (let i = 0; i < 2; i++) {
+            reversedSecondRow.forEach(achievement => {
+                const card = createCard(achievement, analysisCount, feedbackCount, consecutiveDays);
+                row2.appendChild(card);
+            });
+        }
+        
+        container.appendChild(row1);
+        container.appendChild(row2);
+        grid.appendChild(container);
+        
+        // 观察成就卡片以添加滚动动画
+        setTimeout(() => {
+            observeAchievementCards();
+        }, 100);
+        })
+        .catch(error => {
+            console.error('获取用户数据失败:', error);
+        });
+}
+
+// 添加数字增长动画函数
+function animateValue(elementId, start, end, duration) {
+    const element = document.getElementById(elementId);
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const animate = () => {
+        current += increment;
+        element.textContent = Math.round(current);
+        
+        if ((increment > 0 && current < end) || (increment < 0 && current > end)) {
+            requestAnimationFrame(animate);
+        } else {
+            element.textContent = end;
+        }
+    };
+    
+    requestAnimationFrame(animate);
+}
+
+// 优化页面加载
+function initBackgroundParticles() {
+    const layer = document.getElementById('bgParticles');
+    if (!layer) return;
+    layer.innerHTML = '';
+    const count = Math.min(140, Math.floor(window.innerWidth / 18));
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('span');
+        particle.className = 'floating-particle';
+        const size = Math.random() * 6 + 2;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.animationDuration = `${Math.random() * 10 + 8}s`;
+        particle.style.animationDelay = `${Math.random() * 8}s`;
+        layer.appendChild(particle);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+        document.body.style.transition = 'opacity 0.5s ease';
+        document.body.style.opacity = '1';
+        initAchievements();
+        initBackgroundParticles();
+    }, 100);
+});
+
+// 优化页面切换
+document.querySelectorAll('.nav-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = button.getAttribute('href');
+        const transition = document.createElement('div');
+        transition.className = 'page-transition';
+        document.body.appendChild(transition);
+        
+        setTimeout(() => {
+            transition.classList.add('active');
+            setTimeout(() => {
+                window.location.href = href;
+            }, 500);
+        }, 10);
+    });
+});
+
+// 添加滚动动画（在成就卡片创建后观察）
+function observeAchievementCards() {
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, {
+    threshold: 0.1
+});
+
+document.querySelectorAll('.achievement-card').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    observer.observe(card);
+});
+}
+
+</script>
+<link rel="stylesheet" href="static/target-cursor.css">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="static/target-cursor.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initTargetCursor({ targetSelector: 'a, button, .cursor-target', spinDuration: 2, hideDefaultCursor: true });
+  });
+</script>
+</body>
+</html> 
