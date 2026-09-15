@@ -1,0 +1,28 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Python (if backend is added later)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node (if build tools added later)
+node_modules/
+
+# Logs
+*.log
